@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Электронный дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-graduation-cap"></i> Электронный дневник</h1>
+        <p>Добро пожаловать, {{ current_user.get_full_name() }}! ({{ current_user.role.value|title }})</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-star"></i>
+            </div>
+            <h3>Учет оценок</h3>
+            <p>Ведение журнала оценок по всем предметам с возможностью добавления комментариев</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+            <h3>Посещаемость</h3>
+            <p>Отметка присутствия учащихся на уроках с указанием причин отсутствия</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3>Расписание</h3>
+            <p>Просмотр расписания уроков по дням недели</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>Отчеты</h3>
+            <p>Аналитические отчеты для родителей и учителей</p>
+        </div>
+    </div>
+
+    {% if current_user.is_student() %}
+        <div class="role-specific-section">
+            <h2><i class="fas fa-graduation-cap"></i> Мой дневник</h2>
+            {% if current_user.student_profile %}
+                <div class="student-dashboard">
+                    <div class="dashboard-card">
+                        <h3>{{ current_user.student_profile.name }}</h3>
+                        <p class="student-class">{{ current_user.student_profile.class_name }}</p>
+                        <a href="{{ url_for('students.student_diary', student_id=current_user.student_profile.id) }}" class="btn btn-primary">
+                            <i class="fas fa-book-open"></i> Открыть мой дневник
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Что вы можете делать:</h3>
+                    <ul>
+                        <li><i class="fas fa-star"></i> Просматривать свои оценки</li>
+                        <li><i class="fas fa-user-check"></i> Видеть свою посещаемость</li>
+                        <li><i class="fas fa-calendar-alt"></i> Просматривать расписание</li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Профиль студента не найден</h3>
+                    <p>Обратитесь к администратору для настройки профиля</p>
+                </div>
+            {% endif %}
+        </div>
+    {% elif current_user.is_parent() %}
+        <div class="role-specific-section">
+            <h2><i class="fas fa-users"></i> Мои дети</h2>
+            {% if students %}
+                <div class="students-grid">
+                    {% for student in students %}
+                    <div class="student-card">
+                        <div class="student-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-info">
+                            <h3>{{ student.name }}</h3>
+                            <p class="student-class">{{ student.class_name }}</p>
+                            <a href="{{ url_for('students.student_diary', student_id=student.id) }}" class="btn btn-primary">
+                                <i class="fas fa-book-open"></i> Открыть дневник
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Что вы можете делать:</h3>
+                    <ul>
+                        <li><i class="fas fa-eye"></i> Просматривать оценки своих детей</li>
+                        <li><i class="fas fa-user-check"></i> Видеть посещаемость детей</li>
+                        <li><i class="fas fa-chart-bar"></i> Просматривать отчеты по успеваемости</li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Нет связанных детей</h3>
+                    <p>Настройте связи с детьми в <a href="{{ url_for('auth.setup_relationships') }}">профиле</a></p>
+                </div>
+            {% endif %}
+        </div>
+    {% elif current_user.is_teacher() %}
+        <div class="role-specific-section">
+            <h2><i class="fas fa-chalkboard-teacher"></i> Мои ученики</h2>
+            {% if students %}
+                <div class="students-grid">
+                    {% for student in students %}
+                    <div class="student-card">
+                        <div class="student-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-info">
+                            <h3>{{ student.name }}</h3>
+                            <p class="student-class">{{ student.class_name }}</p>
+                            <a href="{{ url_for('students.student_diary', student_id=student.id) }}" class="btn btn-primary">
+                                <i class="fas fa-book-open"></i> Открыть дневник
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="info-card">
+                    <h3><i class="fas fa-info-circle"></i> Что вы можете делать:</h3>
+                    <ul>
+                        <li><i class="fas fa-star"></i> Выставлять оценки ученикам</li>
+                        <li><i class="fas fa-user-check"></i> Отмечать посещаемость</li>
+                        <li><i class="fas fa-chart-bar"></i> Просматривать аналитические отчеты</li>
+                        <li><i class="fas fa-eye"></i> Видеть успеваемость всех учеников</li>
+                    </ul>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Нет учеников</h3>
+                    <p>В системе пока нет зарегистрированных учеников</p>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="role-specific-section">
+            <h2><i class="fas fa-users"></i> Все учащиеся</h2>
+            {% if students %}
+                <div class="students-grid">
+                    {% for student in students %}
+                    <div class="student-card">
+                        <div class="student-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="student-info">
+                            <h3>{{ student.name }}</h3>
+                            <p class="student-class">{{ student.class_name }}</p>
+                            <a href="{{ url_for('students.student_diary', student_id=student.id) }}" class="btn btn-primary">
+                                <i class="fas fa-book-open"></i> Открыть дневник
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Нет учащихся</h3>
+                    <p>Добавьте первого учащегося в систему</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

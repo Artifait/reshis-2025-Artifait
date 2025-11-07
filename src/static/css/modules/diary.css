@@ -1,0 +1,358 @@
+/* Дневник ученика */
+.diary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2rem 0;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    border: 1px solid #E6E6E6;
+}
+
+.student-info h1 {
+    color: #141414;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.student-class {
+    color: #6D6D6D;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Вкладки */
+.diary-tabs {
+    display: flex;
+    margin: 2rem 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    border: 1px solid #E6E6E6;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: white;
+    color: #6D6D6D;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.tab-btn:hover {
+    background: #F6F6F6;
+    color: #00A651;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #00A651 0%, #02E570 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Списки оценок и посещаемости */
+.grades-list,
+.attendance-list {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    overflow: hidden;
+    border: 1px solid #E6E6E6;
+}
+
+.grade-item,
+.attendance-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grade-item:last-child,
+.attendance-item:last-child {
+    border-bottom: none;
+}
+
+.grade-info,
+.attendance-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.subject {
+    font-weight: 600;
+    color: #141414;
+}
+
+.grade {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.grade-5 { background: #00A651; }
+.grade-4 { background: #2CB9FF; }
+.grade-3 { background: #FFDD2D; color: #141414; }
+.grade-2 { background: #FF662C; }
+
+.date {
+    color: #6D6D6D;
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.grade-comment,
+.attendance-reason {
+    margin-top: 0.5rem;
+    color: #6D6D6D;
+    font-style: italic;
+    font-weight: 400;
+}
+
+.status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.status.present {
+    background: #00A651;
+    color: white;
+}
+
+.status.absent {
+    background: #FF662C;
+    color: white;
+}
+
+/* Фильтры расписания */
+.schedule-filters {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    border: 1px solid #E6E6E6;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+}
+
+.filter-form {
+    width: 100%;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #141414;
+    font-size: 0.9rem;
+}
+
+.filter-group select,
+.filter-group input[type="time"] {
+    padding: 0.75rem;
+    border: 2px solid #E6E6E6;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.filter-group select:focus,
+.filter-group input[type="time"]:focus {
+    outline: none;
+    border-color: #00A651;
+    box-shadow: 0 0 0 3px rgba(0, 166, 81, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.filter-actions .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* Расписание */
+.schedule-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    border: 1px solid #E6E6E6;
+}
+
+.schedule-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.schedule-table th,
+.schedule-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.schedule-table th {
+    background: #F6F6F6;
+    font-weight: 600;
+    color: #141414;
+}
+
+.statistics-section {
+    margin: 2rem 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.08);
+    border: 1px solid #E6E6E6;
+    padding: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+    border-radius: 12px;
+    border: 1px solid #E6E6E6;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 166, 81, 0.15);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #00A651 0%, #02E570 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.stat-content h3 {
+    margin: 0 0 0.5rem 0;
+    color: #6D6D6D;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #141414;
+    margin: 0;
+}
+
+.grade-distribution {
+    margin-top: 2rem;
+}
+
+.grade-distribution h3 {
+    color: #141414;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.distribution-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.distribution-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.grade-label {
+    width: 30px;
+    text-align: center;
+    font-weight: 600;
+    color: #141414;
+}
+
+.bar-container {
+    flex: 1;
+    position: relative;
+    height: 30px;
+    background: #F6F6F6;
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.bar {
+    height: 100%;
+    border-radius: 15px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.bar.grade-5 { background: linear-gradient(135deg, #00A651 0%, #02E570 100%); }
+.bar.grade-4 { background: linear-gradient(135deg, #2CB9FF 0%, #5BC0FF 100%); }
+.bar.grade-3 { background: linear-gradient(135deg, #FFDD2D 0%, #FFE55C 100%); }
+.bar.grade-2 { background: linear-gradient(135deg, #FF662C 0%, #FF8A5B 100%); }
+
+.count {
+    position: absolute;
+    right: 10px;
+    color: #6D6D6D;
+    font-weight: 600;
+    font-size: 0.9rem;
+}

@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Отчеты - Электронный дневник{% endblock %}
+
+{% block content %}
+{% if not current_user.is_teacher() and not current_user.is_parent() and not current_user.is_admin() %}
+    <div class="container">
+        <div class="empty-state">
+            <i class="fas fa-lock"></i>
+            <h3>Доступ запрещен</h3>
+            <p>У вас нет прав для просмотра отчетов</p>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> На главную
+            </a>
+        </div>
+    </div>
+{% else %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-bar"></i> Отчеты по предметам</h1>
+        <p>Выберите предмет для просмотра детального отчета по успеваемости и посещаемости</p>
+    </div>
+
+    <!-- Выбор предмета -->
+    <div class="subject-selection">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-book"></i> Выберите предмет
+                </h5>
+                <form method="GET" action="{{ url_for('reports.reports') }}" class="subject-form">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <select name="subject_id" class="form-select" required>
+                                <option value="">-- Выберите предмет --</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.id }}" 
+                                        {{ 'selected' if selected_subject and selected_subject.id == subject.id else '' }}>
+                                    {{ subject.name }} ({{ subject.teacher }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-chart-line"></i> Показать отчет
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Отчет по выбранному предмету -->
+    {% if report_data and selected_subject %}
+    <div class="report-section">
+        <div class="report-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2>
+                        <i class="fas fa-chart-bar"></i> 
+                        Отчет по предмету: {{ selected_subject.name }}
+                    </h2>
+                    <p class="text-muted">Преподаватель: {{ selected_subject.teacher }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('reports.export_csv', subject_id=selected_subject.id) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-download"></i> Скачать CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-table-container">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th rowspan="2" class="text-center student-column">Ученик</th>
+                            <th rowspan="2" class="text-center class-column">Класс</th>
+                            {% for date in report_data.dates %}
+                            <th colspan="2" class="text-center date-column">{{ date.strftime('%d.%m.%Y') }}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            {% for date in report_data.dates %}
+                            <th class="text-center grade-header">Оценка</th>
+                            <th class="text-center attendance-header">Посещаемость</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student_id, student_data in report_data.students_data.items() %}
+                        <tr>
+                            <td class="student-name fw-bold">{{ student_data.student.name }}</td>
+                            <td class="text-center">{{ student_data.student.class_name }}</td>
+                            
+                            {% for date in report_data.dates %}
+                                {% set date_info = student_data.dates.get(date, {}) %}
+                                <td class="text-center grade-cell">
+                                    {% if date_info.grade %}
+                                        <span class="badge bg-{% if date_info.grade >= 4 %}success{% elif date_info.grade >= 3 %}warning{% else %}danger{% endif %}">
+                                            {{ date_info.grade }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center attendance-cell">
+                                    {% if date_info.present is not none %}
+                                        {% if date_info.present %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Присутствовал
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Отсутствовал
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Статистика по предмету -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">{{ report_data.students_data|length }}</h5>
+                        <p class="card-text">Учеников в отчете</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">{{ report_data.dates|length }}</h5>
+                        <p class="card-text">Дней с данными</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">
+                            {% set total_grades = [] %}
+                            {% for student_id, student_data in report_data.students_data.items() %}
+                                {% for date in report_data.dates %}
+                                    {% set date_info = student_data.dates.get(date, {}) %}
+                                    {% if date_info.grade %}
+                                        {{ total_grades.append(date_info.grade) or '' }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {{ total_grades|length }}
+                        </h5>
+                        <p class="card-text">Всего оценок</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">
+                            {% set present_count = 0 %}
+                            {% set total_count = 0 %}
+                            {% for student_id, student_data in report_data.students_data.items() %}
+                                {% for date in report_data.dates %}
+                                    {% set date_info = student_data.dates.get(date, {}) %}
+                                    {% if date_info.present is not none %}
+                                        {% if date_info.present %}
+                                            {{ present_count + 1 }}
+                                        {% endif %}
+                                        {{ total_count + 1 }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {% if total_count > 0 %}
+                                {{ "%.1f"|format(present_count / total_count * 100) }}%
+                            {% else %}
+                                -
+                            {% endif %}
+                        </h5>
+                        <p class="card-text">Средняя посещаемость</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif selected_subject %}
+    <div class="empty-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Нет данных по предмету</h3>
+        <p>По выбранному предмету "{{ selected_subject.name }}" пока нет данных об оценках или посещаемости</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.page-header p {
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+
+.subject-selection {
+    margin-bottom: 2rem;
+}
+
+.subject-form {
+    margin-top: 1rem;
+}
+
+.report-section {
+    margin-top: 2rem;
+}
+
+.report-header {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.report-table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.table th {
+    border: none;
+    font-weight: 600;
+    padding: 12px 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table td {
+    border: 1px solid #dee2e6;
+    padding: 10px 8px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.student-column {
+    min-width: 150px;
+    background-color: #343a40 !important;
+}
+
+.class-column {
+    min-width: 80px;
+    background-color: #343a40 !important;
+}
+
+.date-column {
+    min-width: 120px;
+    background-color: #495057 !important;
+}
+
+.grade-header {
+    background-color: #6c757d !important;
+    min-width: 60px;
+}
+
+.attendance-header {
+    background-color: #6c757d !important;
+    min-width: 100px;
+}
+
+.student-name {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.grade-cell, .attendance-cell {
+    text-align: center;
+}
+
+.badge {
+    font-size: 0.8rem;
+    padding: 0.4em 0.6em;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 6px 4px;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.3em 0.5em;
+    }
+    
+    .student-column,
+    .class-column {
+        min-width: auto;
+    }
+    
+    .date-column {
+        min-width: 100px;
+    }
+}
+</style>
+{% endif %}
+
+{% endblock %}
