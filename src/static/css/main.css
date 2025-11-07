@@ -1,0 +1,22 @@
+/* Главный CSS файл - импорты всех модулей */
+
+/* Базовые стили и сброс */
+@import url('modules/base.css');
+
+/* Навигация */
+@import url('modules/navigation.css');
+
+/* Компоненты (кнопки, карточки, формы) */
+@import url('modules/components.css');
+
+/* Стили для дневника */
+@import url('modules/diary.css');
+
+/* Стили для отчетов */
+@import url('modules/reports.css');
+
+/* Стили для авторизации */
+@import url('modules/auth.css');
+
+/* Стили для профиля */
+@import url('modules/profile.css');

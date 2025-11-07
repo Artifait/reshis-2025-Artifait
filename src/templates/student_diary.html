@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} - Дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="diary-header">
+        <div class="student-info">
+            <h1><i class="fas fa-user"></i> {{ student.name }}</h1>
+            <p class="student-class">{{ student.class_name }}</p>
+        </div>
+        <div class="diary-nav">
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+    </div>
+
+    <div class="diary-tabs">
+        <a href="{{ url_for('students.student_diary', student_id=student.id, tab='grades') }}" 
+           class="tab-btn {{ 'active' if request.args.get('tab', 'grades') == 'grades' else '' }}">
+            <i class="fas fa-star"></i> Оценки
+        </a>
+        <a href="{{ url_for('students.student_diary', student_id=student.id, tab='attendance') }}" 
+           class="tab-btn {{ 'active' if request.args.get('tab') == 'attendance' else '' }}">
+            <i class="fas fa-user-check"></i> Посещаемость
+        </a>
+        <a href="{{ url_for('students.student_diary', student_id=student.id, tab='schedule') }}" 
+           class="tab-btn {{ 'active' if request.args.get('tab') == 'schedule' else '' }}">
+            <i class="fas fa-calendar-alt"></i> Расписание
+        </a>
+    </div>
+
+    <!-- Вкладка оценок -->
+    <div id="grades" class="tab-content {{ 'active' if request.args.get('tab', 'grades') == 'grades' else '' }}">
+        <div class="section-header">
+            <h2><i class="fas fa-star"></i> Оценки</h2>
+            {% if current_user.is_teacher() or current_user.is_admin() %}
+                <a href="{{ url_for('students.student_diary', student_id=student.id, tab='grades', show_form='grade') }}" 
+                   class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить оценку
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Форма добавления оценки -->
+        {% if request.args.get('show_form') == 'grade' %}
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('students.add_grade', student_id=student.id) }}">
+                <input type="hidden" name="student_id" value="{{ student.id }}">
+                <div class="form-group">
+                    <label for="subject_id">Предмет:</label>
+                    <select name="subject_id" id="subject_id" required>
+                        <option value="">Выберите предмет</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Оценка:</label>
+                    <select name="grade" id="grade" required>
+                        <option value="">Выберите оценку</option>
+                        <option value="5">5 (Отлично)</option>
+                        <option value="4">4 (Хорошо)</option>
+                        <option value="3">3 (Удовлетворительно)</option>
+                        <option value="2">2 (Неудовлетворительно)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Комментарий:</label>
+                    <textarea name="comment" id="comment" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <a href="{{ url_for('students.student_diary', student_id=student.id, tab='grades') }}" 
+                       class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Список оценок -->
+        <div class="grades-list">
+            {% if grades %}
+                {% for grade in grades %}
+                <div class="grade-item">
+                    <div class="grade-info">
+                        <span class="subject">{{ grade.subject.name }}</span>
+                        <span class="grade grade-{{ grade.grade }}">{{ grade.grade }}</span>
+                        <span class="date">{{ grade.date.strftime('%d.%m.%Y') }}</span>
+                    </div>
+                    {% if grade.comment %}
+                    <div class="grade-comment">{{ grade.comment }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-star"></i>
+                    <h3>Нет оценок</h3>
+                    <p>Оценки появятся здесь после их добавления</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Вкладка посещаемости -->
+    <div id="attendance" class="tab-content {{ 'active' if request.args.get('tab') == 'attendance' else '' }}">
+        <div class="section-header">
+            <h2><i class="fas fa-user-check"></i> Посещаемость</h2>
+            {% if current_user.is_teacher() or current_user.is_admin() %}
+                <a href="{{ url_for('students.student_diary', student_id=student.id, tab='attendance', show_form='attendance') }}" 
+                   class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Отметить посещаемость
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Форма добавления посещаемости -->
+        {% if request.args.get('show_form') == 'attendance' %}
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('students.add_attendance', student_id=student.id) }}">
+                <input type="hidden" name="student_id" value="{{ student.id }}">
+                <div class="form-group">
+                    <label for="attendance_subject_id">Предмет:</label>
+                    <select name="subject_id" id="attendance_subject_id" required>
+                        <option value="">Выберите предмет</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="present" checked> Присутствовал
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Причина отсутствия (если не присутствовал):</label>
+                    <input type="text" name="reason" id="reason" placeholder="Болезнь, семейные обстоятельства и т.д.">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a href="{{ url_for('students.student_diary', student_id=student.id, tab='attendance') }}" 
+                       class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Список посещаемости -->
+        <div class="attendance-list">
+            {% if attendance %}
+                {% for att in attendance %}
+                <div class="attendance-item">
+                    <div class="attendance-info">
+                        <span class="subject">{{ att.subject.name }}</span>
+                        <span class="date">{{ att.date.strftime('%d.%m.%Y') }}</span>
+                        <span class="status {{ 'present' if att.present else 'absent' }}">
+                            <i class="fas fa-{{ 'check' if att.present else 'times' }}"></i>
+                            {{ 'Присутствовал' if att.present else 'Отсутствовал' }}
+                        </span>
+                    </div>
+                    {% if att.reason %}
+                    <div class="attendance-reason">{{ att.reason }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-check"></i>
+                    <h3>Нет записей о посещаемости</h3>
+                    <p>Записи о посещаемости появятся здесь после их добавления</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Вкладка расписания -->
+    <div id="schedule" class="tab-content {{ 'active' if request.args.get('tab') == 'schedule' else '' }}">
+        <div class="section-header">
+            <h2><i class="fas fa-calendar-alt"></i> Расписание</h2>
+        </div>
+
+        <div class="schedule-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>День недели</th>
+                        <th>Время</th>
+                        <th>Предмет</th>
+                        <th>Учитель</th>
+                        <th>Кабинет</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sched in schedule %}
+                    <tr>
+                        <td>{{ ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][sched.day_of_week] }}</td>
+                        <td>{{ sched.time_start.strftime('%H:%M') }} - {{ sched.time_end.strftime('%H:%M') }}</td>
+                        <td>{{ sched.subject.name }}</td>
+                        <td>{{ sched.subject.teacher }}</td>
+                        <td>{{ sched.classroom }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

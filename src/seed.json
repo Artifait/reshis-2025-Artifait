@@ -1,0 +1,556 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@school.ru",
+      "first_name": "Администратор",
+      "last_name": "Системы",
+      "password": "admin123",
+      "role": "admin"
+    },
+    {
+      "username": "teacher1",
+      "email": "teacher1@school.ru",
+      "first_name": "Анна",
+      "last_name": "Петрова",
+      "password": "teacher123",
+      "role": "teacher"
+    },
+    {
+      "username": "parent1",
+      "email": "parent1@school.ru",
+      "first_name": "Мария",
+      "last_name": "Иванова",
+      "password": "parent123",
+      "role": "parent"
+    },
+    {
+      "username": "student1",
+      "email": "student1@school.ru",
+      "first_name": "Иван",
+      "last_name": "Иванов",
+      "password": "student123",
+      "role": "student"
+    },
+    {
+      "username": "student2",
+      "email": "student2@school.ru",
+      "first_name": "Мария",
+      "last_name": "Сидорова",
+      "password": "student123",
+      "role": "student"
+    },
+    {
+      "username": "student3",
+      "email": "student3@school.ru",
+      "first_name": "Алексей",
+      "last_name": "Козлов",
+      "password": "student123",
+      "role": "student"
+    },
+    {
+      "username": "student4",
+      "email": "student4@school.ru",
+      "first_name": "Елена",
+      "last_name": "Морозова",
+      "password": "student123",
+      "role": "student"
+    }
+  ],
+  "students": [
+    {
+      "name": "Иван Петров",
+      "class_name": "10А"
+    },
+    {
+      "name": "Мария Сидорова",
+      "class_name": "10А"
+    },
+    {
+      "name": "Алексей Козлов",
+      "class_name": "10А"
+    },
+    {
+      "name": "Елена Морозова",
+      "class_name": "10Б"
+    },
+    {
+      "name": "Дмитрий Волков",
+      "class_name": "10Б"
+    },
+    {
+      "name": "Анна Соколова",
+      "class_name": "10Б"
+    },
+    {
+      "name": "Сергей Новиков",
+      "class_name": "11А"
+    },
+    {
+      "name": "Ольга Лебедева",
+      "class_name": "11А"
+    }
+  ],
+  "subjects": [
+    {
+      "name": "Математика",
+      "teacher": "Смирнова А.А."
+    },
+    {
+      "name": "Русский язык",
+      "teacher": "Козлова М.В."
+    },
+    {
+      "name": "Физика",
+      "teacher": "Иванов П.С."
+    },
+    {
+      "name": "Химия",
+      "teacher": "Соколова Е.Н."
+    },
+    {
+      "name": "История",
+      "teacher": "Морозов В.И."
+    },
+    {
+      "name": "Биология",
+      "teacher": "Петрова Л.К."
+    },
+    {
+      "name": "География",
+      "teacher": "Волкова Н.С."
+    },
+    {
+      "name": "Информатика",
+      "teacher": "Новиков А.В."
+    },
+    {
+      "name": "Литература",
+      "teacher": "Лебедева Т.М."
+    },
+    {
+      "name": "Английский язык",
+      "teacher": "Соколов И.П."
+    }
+  ],
+  "schedule": [
+    {
+      "day_of_week": 0,
+      "time_start": "09:00",
+      "time_end": "09:45",
+      "classroom": "101",
+      "subject_name": "Математика"
+    },
+    {
+      "day_of_week": 0,
+      "time_start": "10:00",
+      "time_end": "10:45",
+      "classroom": "102",
+      "subject_name": "Русский язык"
+    },
+    {
+      "day_of_week": 0,
+      "time_start": "11:00",
+      "time_end": "11:45",
+      "classroom": "201",
+      "subject_name": "Физика"
+    },
+    {
+      "day_of_week": 1,
+      "time_start": "09:00",
+      "time_end": "09:45",
+      "classroom": "301",
+      "subject_name": "Химия"
+    },
+    {
+      "day_of_week": 1,
+      "time_start": "10:00",
+      "time_end": "10:45",
+      "classroom": "302",
+      "subject_name": "История"
+    },
+    {
+      "day_of_week": 1,
+      "time_start": "11:00",
+      "time_end": "11:45",
+      "classroom": "401",
+      "subject_name": "Биология"
+    },
+    {
+      "day_of_week": 2,
+      "time_start": "09:00",
+      "time_end": "09:45",
+      "classroom": "501",
+      "subject_name": "География"
+    },
+    {
+      "day_of_week": 2,
+      "time_start": "10:00",
+      "time_end": "10:45",
+      "classroom": "502",
+      "subject_name": "Информатика"
+    },
+    {
+      "day_of_week": 2,
+      "time_start": "11:00",
+      "time_end": "11:45",
+      "classroom": "601",
+      "subject_name": "Литература"
+    },
+    {
+      "day_of_week": 3,
+      "time_start": "09:00",
+      "time_end": "09:45",
+      "classroom": "701",
+      "subject_name": "Английский язык"
+    },
+    {
+      "day_of_week": 3,
+      "time_start": "10:00",
+      "time_end": "10:45",
+      "classroom": "702",
+      "subject_name": "Математика"
+    },
+    {
+      "day_of_week": 3,
+      "time_start": "11:00",
+      "time_end": "11:45",
+      "classroom": "801",
+      "subject_name": "Физика"
+    },
+    {
+      "day_of_week": 4,
+      "time_start": "09:00",
+      "time_end": "09:45",
+      "classroom": "901",
+      "subject_name": "Химия"
+    },
+    {
+      "day_of_week": 4,
+      "time_start": "10:00",
+      "time_end": "10:45",
+      "classroom": "902",
+      "subject_name": "История"
+    },
+    {
+      "day_of_week": 4,
+      "time_start": "11:00",
+      "time_end": "11:45",
+      "classroom": "1001",
+      "subject_name": "Русский язык"
+    }
+  ],
+  "grades": [
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Математика",
+      "grade": 5,
+      "date": "2025-10-01",
+      "comment": "Отличная работа на уроке"
+    },
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Математика",
+      "grade": 4,
+      "date": "2025-10-03",
+      "comment": "Хорошо решена задача"
+    },
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Русский язык",
+      "grade": 5,
+      "date": "2025-10-02",
+      "comment": "Отличное сочинение"
+    },
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Физика",
+      "grade": 4,
+      "date": "2025-10-04",
+      "comment": "Хорошо выполнил лабораторную"
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Математика",
+      "grade": 5,
+      "date": "2025-10-01",
+      "comment": "Превосходное решение"
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Русский язык",
+      "grade": 5,
+      "date": "2025-10-02",
+      "comment": "Отличное изложение"
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Химия",
+      "grade": 4,
+      "date": "2025-10-05",
+      "comment": "Хорошо знает материал"
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Математика",
+      "grade": 3,
+      "date": "2025-10-01",
+      "comment": "Нужно больше практики"
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Физика",
+      "grade": 4,
+      "date": "2025-10-04",
+      "comment": "Улучшился в решении задач"
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Информатика",
+      "grade": 5,
+      "date": "2025-10-06",
+      "comment": "Отличное программирование"
+    },
+    {
+      "student_name": "Елена Морозова",
+      "subject_name": "Литература",
+      "grade": 5,
+      "date": "2025-10-07",
+      "comment": "Прекрасный анализ произведения"
+    },
+    {
+      "student_name": "Елена Морозова",
+      "subject_name": "Русский язык",
+      "grade": 5,
+      "date": "2025-10-02",
+      "comment": "Отличное знание грамматики"
+    },
+    {
+      "student_name": "Дмитрий Волков",
+      "subject_name": "История",
+      "grade": 4,
+      "date": "2025-10-08",
+      "comment": "Хорошо подготовился к уроку"
+    },
+    {
+      "student_name": "Дмитрий Волков",
+      "subject_name": "География",
+      "grade": 5,
+      "date": "2025-10-09",
+      "comment": "Отличные знания по географии"
+    },
+    {
+      "student_name": "Анна Соколова",
+      "subject_name": "Биология",
+      "grade": 5,
+      "date": "2025-10-10",
+      "comment": "Превосходные знания по биологии"
+    },
+    {
+      "student_name": "Анна Соколова",
+      "subject_name": "Химия",
+      "grade": 4,
+      "date": "2025-10-05",
+      "comment": "Хорошо выполнила практическую работу"
+    },
+    {
+      "student_name": "Сергей Новиков",
+      "subject_name": "Информатика",
+      "grade": 5,
+      "date": "2025-10-06",
+      "comment": "Отличное программирование"
+    },
+    {
+      "student_name": "Сергей Новиков",
+      "subject_name": "Математика",
+      "grade": 4,
+      "date": "2025-10-11",
+      "comment": "Хорошо решает сложные задачи"
+    },
+    {
+      "student_name": "Ольга Лебедева",
+      "subject_name": "Английский язык",
+      "grade": 5,
+      "date": "2025-10-12",
+      "comment": "Отличное произношение"
+    },
+    {
+      "student_name": "Ольга Лебедева",
+      "subject_name": "Литература",
+      "grade": 5,
+      "date": "2025-10-07",
+      "comment": "Прекрасный анализ текста"
+    }
+  ],
+  "attendance": [
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Математика",
+      "date": "2025-10-01",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Русский язык",
+      "date": "2025-10-02",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Иван Петров",
+      "subject_name": "Физика",
+      "date": "2025-10-04",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Математика",
+      "date": "2025-10-01",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Русский язык",
+      "date": "2025-10-02",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Мария Сидорова",
+      "subject_name": "Химия",
+      "date": "2025-10-05",
+      "present": false,
+      "reason": "Болезнь"
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Математика",
+      "date": "2025-10-01",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Физика",
+      "date": "2025-10-04",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Алексей Козлов",
+      "subject_name": "Информатика",
+      "date": "2025-10-06",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Елена Морозова",
+      "subject_name": "Литература",
+      "date": "2025-10-07",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Елена Морозова",
+      "subject_name": "Русский язык",
+      "date": "2025-10-02",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Дмитрий Волков",
+      "subject_name": "История",
+      "date": "2025-10-08",
+      "present": false,
+      "reason": "Семейные обстоятельства"
+    },
+    {
+      "student_name": "Дмитрий Волков",
+      "subject_name": "География",
+      "date": "2025-10-09",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Анна Соколова",
+      "subject_name": "Биология",
+      "date": "2025-10-10",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Анна Соколова",
+      "subject_name": "Химия",
+      "date": "2025-10-05",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Сергей Новиков",
+      "subject_name": "Информатика",
+      "date": "2025-10-06",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Сергей Новиков",
+      "subject_name": "Математика",
+      "date": "2025-10-11",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Ольга Лебедева",
+      "subject_name": "Английский язык",
+      "date": "2025-10-12",
+      "present": true,
+      "reason": ""
+    },
+    {
+      "student_name": "Ольга Лебедева",
+      "subject_name": "Литература",
+      "date": "2025-10-07",
+      "present": true,
+      "reason": ""
+    }
+  ],
+  "relationships": {
+    "parent_child": [
+      {
+        "parent_username": "parent1",
+        "child_name": "Иван Петров"
+      }
+    ],
+    "teacher_subject": [
+      {
+        "teacher_username": "teacher1",
+        "subject_name": "Математика"
+      },
+      {
+        "teacher_username": "teacher1",
+        "subject_name": "Физика"
+      }
+    ],
+    "student_user": [
+      {
+        "student_name": "Иван Петров",
+        "user_username": "student1"
+      },
+      {
+        "student_name": "Мария Сидорова",
+        "user_username": "student2"
+      },
+      {
+        "student_name": "Алексей Козлов",
+        "user_username": "student3"
+      },
+      {
+        "student_name": "Елена Морозова",
+        "user_username": "student4"
+      }
+    ]
+  }
+}

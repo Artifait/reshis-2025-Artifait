@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Настройка связей - Электронный дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-link"></i> Настройка связей</h1>
+        <p>Установите связи с детьми или предметами в зависимости от вашей роли</p>
+    </div>
+    
+    {% if current_user.is_parent() %}
+        <div class="relationship-section">
+            <h2><i class="fas fa-users"></i> Связь с детьми</h2>
+            <p>Выберите ребенка, с которым хотите установить связь:</p>
+            
+            {% if students %}
+                <form method="POST" class="relationship-form">
+                    <div class="form-group">
+                        <label for="child_id">Выберите ребенка:</label>
+                        <select name="child_id" id="child_id" class="form-control" required>
+                            <option value="">-- Выберите ребенка --</option>
+                            {% for student in students %}
+                                <option value="{{ student.id }}">{{ student.name }} ({{ student.class_name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-link"></i> Установить связь
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-plus"></i>
+                    <h3>Нет доступных детей</h3>
+                    <p>В системе пока нет зарегистрированных детей</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    {% if current_user.is_teacher() %}
+        <div class="relationship-section">
+            <h2><i class="fas fa-chalkboard-teacher"></i> Связь с предметами</h2>
+            <p>Выберите предмет, который вы преподаете:</p>
+            
+            {% if subjects %}
+                <form method="POST" class="relationship-form">
+                    <div class="form-group">
+                        <label for="subject_id">Выберите предмет:</label>
+                        <select name="subject_id" id="subject_id" class="form-control" required>
+                            <option value="">-- Выберите предмет --</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject.id }}">{{ subject.name }} ({{ subject.teacher }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-link"></i> Установить связь
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-book"></i>
+                    <h3>Нет доступных предметов</h3>
+                    <p>В системе пока нет зарегистрированных предметов</p>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <div class="profile-actions">
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к профилю
+        </a>
+    </div>
+</div>
+{% endblock %}

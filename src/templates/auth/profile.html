@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль пользователя - Электронный дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-user"></i> Профиль пользователя</h1>
+    </div>
+    
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h2>{{ user.get_full_name() }}</h2>
+                    <p class="profile-role">
+                        <i class="fas fa-{% if user.is_student() %}graduation-cap{% elif user.is_parent() %}users{% elif user.is_teacher() %}chalkboard-teacher{% else %}crown{% endif %}"></i>
+                        {{ user.role.value|title }}
+                    </p>
+                    <p class="profile-username">@{{ user.username }}</p>
+                </div>
+            </div>
+            
+            <div class="profile-details">
+                <div class="detail-item">
+                    <label>Email:</label>
+                    <span>{{ user.email }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Дата регистрации:</label>
+                    <span>{{ user.created_at.strftime('%d.%m.%Y') }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>Статус:</label>
+                    <span class="status status-{% if user.is_active %}active{% else %}inactive{% endif %}">
+                        {% if user.is_active %}Активен{% else %}Заблокирован{% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">
+                    <i class="fas fa-key"></i> Изменить пароль
+                </a>
+                {% if user.is_parent() or user.is_teacher() %}
+                    <a href="{{ url_for('auth.setup_relationships') }}" class="btn btn-info">
+                        <i class="fas fa-link"></i> Настроить связи
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if user.is_student() and user.student_profile %}
+            <div class="profile-card">
+                <h3><i class="fas fa-graduation-cap"></i> Информация о студенте</h3>
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <label>Класс:</label>
+                        <span>{{ user.student_profile.class_name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Дата добавления:</label>
+                        <span>{{ user.student_profile.created_at.strftime('%d.%m.%Y') }}</span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <a href="{{ url_for('students.student_diary', student_id=user.student_profile.id) }}" class="btn btn-primary">
+                        <i class="fas fa-book-open"></i> Открыть дневник
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if user.is_parent() and user.parent_children %}
+            <div class="profile-card">
+                <h3><i class="fas fa-users"></i> Мои дети</h3>
+                <div class="children-list">
+                    {% for relationship in user.parent_children %}
+                        <div class="child-item">
+                            <div class="child-info">
+                                <h4>{{ relationship.child.name }}</h4>
+                                <p>{{ relationship.child.class_name }}</p>
+                            </div>
+                            <div class="child-actions">
+                                <a href="{{ url_for('students.student_diary', student_id=relationship.child.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-book-open"></i> Дневник
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if user.is_teacher() and user.teacher_subjects %}
+            <div class="profile-card">
+                <h3><i class="fas fa-chalkboard-teacher"></i> Мои предметы</h3>
+                <div class="subjects-list">
+                    {% for ts in user.teacher_subjects %}
+                        <div class="subject-item">
+                            <div class="subject-info">
+                                <h4>{{ ts.subject.name }}</h4>
+                                <p>{% if ts.is_primary %}Основной учитель{% else %}Дополнительный учитель{% endif %}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

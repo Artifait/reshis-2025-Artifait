@@ -1,0 +1,163 @@
+name: Classroom Onboarding
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  repository_dispatch:
+    types: [bootstrap]
+
+jobs:
+  create-prs-and-issues:
+    name: Create PRs and Issues on first push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare task bodies
+        id: tasks
+        run: |
+          printf "::group::Read tasks\n"
+          # Read tasks 1-5 for PR descriptions
+          for i in 01 02 03 04 05; do
+            FILE="tasks/${i}.md"
+            if [ -f "$FILE" ]; then
+              BODY=$(awk '1' "$FILE")
+              echo "pr_task_${i}<<EOF" >> $GITHUB_OUTPUT
+              echo "$BODY" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            fi
+          done
+          # Read tasks 6-10 for issues
+          for i in 06 07 08 09 10; do
+            FILE="tasks/${i}.md"
+            if [ -f "$FILE" ]; then
+              BODY=$(awk '1' "$FILE")
+              echo "task_${i}<<EOF" >> $GITHUB_OUTPUT
+              echo "$BODY" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            fi
+          done
+          printf "::endgroup::\n"
+
+      - name: Merge main into feature branches
+        run: |
+          # Configure git
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Ensure we have up-to-date refs
+          git fetch --all --prune
+          git checkout main
+          git pull --ff-only || true
+          
+          # Feature branches to process
+          FEATURE_BRANCHES=(
+            "feature/01-personalize-profile"
+            "feature/02-add-mean-median-score" 
+            "feature/03-password-validation"
+            "feature/04-schedule-filter"
+            "feature/05-parent-link"
+          )
+          
+          for branch in "${FEATURE_BRANCHES[@]}"; do
+            echo "Processing branch: $branch"
+            
+            # Check if branch exists
+            if ! git show-ref --verify --quiet refs/remotes/origin/$branch; then
+              echo "Branch $branch does not exist, skipping..."
+              continue
+            fi
+            
+            # Checkout the feature branch
+            git checkout $branch
+            
+            # Merge main into feature branch, resolving conflicts by taking feature branch code
+            if ! git merge --allow-unrelated-histories -s ours --no-edit main; then
+              echo "Merge failed for $branch, trying to resolve conflicts..."
+              # If merge fails, reset to feature branch state
+              git reset --hard HEAD
+              git merge --allow-unrelated-histories -s ours --no-edit main || {
+                echo "Failed to merge main into $branch"
+                continue
+              }
+            fi
+            
+            # Push the updated branch
+            git push origin $branch
+            
+            echo "Successfully merged main into $branch"
+          done
+
+      - name: Create PRs and Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const featureBranches = [
+              { branch: 'feature/01-personalize-profile', taskNum: '01', title: 'Задача 1 — Персонализированный профиль' },
+              { branch: 'feature/02-add-mean-median-score', taskNum: '02', title: 'Задача 2 — Статистика по оценкам' },
+              { branch: 'feature/03-password-validation', taskNum: '03', title: 'Задача 3 — Безопасность паролей' },
+              { branch: 'feature/04-schedule-filter', taskNum: '04', title: 'Задача 4 — Фильтруем расписание' },
+              { branch: 'feature/05-parent-link', taskNum: '05', title: 'Задача 5 — Родительский контроль' },
+            ];
+
+            const issueSpecs = [
+              { num: '06', title: 'Задача 6 — Исправление багов в статистике', labels: ['task','priority-high'] },
+              { num: '07', title: 'Задача 7 — Средний балл на главной странице', labels: ['task','priority-medium'] },
+              { num: '08', title: 'Задача 8 — Деактивация пользователей', labels: ['task','priority-high','security'] },
+              { num: '09', title: 'Задача 9 — Telegram-уведомления о новых оценках', labels: ['task','priority-medium'] },
+              { num: '10', title: 'Задача 10 — Придумай и реализуй собственную фичу', labels: ['task','priority-low','integration'] },
+            ];
+
+            const { owner, repo } = context.repo;
+
+            // Create PRs for feature branches if missing
+            for (const { branch, taskNum, title } of featureBranches) {
+              const prs = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branch}`, base: 'main' });
+              if (prs.data.length > 0) {
+                core.info(`PR for ${branch} already exists.`);
+                continue;
+              }
+              const taskBody = process.env[`pr_task_${taskNum}`];
+              await github.rest.pulls.create({
+                owner,
+                repo,
+                title: title,
+                head: branch,
+                base: 'main',
+                body: taskBody || `Автоматически созданный PR из ветки ${branch} для студенческого репозитория.`
+              });
+              core.notice(`PR created for ${branch}: ${title}`);
+            }
+
+            // Create issues 6-10 if missing
+            for (const spec of issueSpecs) {
+              const existing = await github.rest.issues.listForRepo({ owner, repo, state: 'all', per_page: 100 });
+              if (existing.data.some(i => i.title === spec.title)) {
+                core.info(`Issue already exists: ${spec.title}`);
+                continue;
+              }
+              const envKey = `task_${spec.num}`;
+              const body = process.env[envKey];
+              await github.rest.issues.create({ owner, repo, title: spec.title, body: body || spec.title, labels: spec.labels });
+              core.notice(`Issue created: ${spec.title}`);
+            }
+        env:
+          pr_task_01: ${{ steps.tasks.outputs.pr_task_01 }}
+          pr_task_02: ${{ steps.tasks.outputs.pr_task_02 }}
+          pr_task_03: ${{ steps.tasks.outputs.pr_task_03 }}
+          pr_task_04: ${{ steps.tasks.outputs.pr_task_04 }}
+          pr_task_05: ${{ steps.tasks.outputs.pr_task_05 }}
+          task_06: ${{ steps.tasks.outputs.task_06 }}
+          task_07: ${{ steps.tasks.outputs.task_07 }}
+          task_08: ${{ steps.tasks.outputs.task_08 }}
+          task_09: ${{ steps.tasks.outputs.task_09 }}
+          task_10: ${{ steps.tasks.outputs.task_10 }}
