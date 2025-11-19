@@ -102,19 +102,19 @@ jobs:
         with:
           script: |
             const featureBranches = [
-              { branch: 'feature/01-personalize-profile', taskNum: '01', title: 'Задача 1 — Персонализированный профиль' },
-              { branch: 'feature/02-add-mean-median-score', taskNum: '02', title: 'Задача 2 — Статистика по оценкам' },
-              { branch: 'feature/03-password-validation', taskNum: '03', title: 'Задача 3 — Безопасность паролей' },
-              { branch: 'feature/04-schedule-filter', taskNum: '04', title: 'Задача 4 — Фильтруем расписание' },
-              { branch: 'feature/05-parent-link', taskNum: '05', title: 'Задача 5 — Родительский контроль' },
+              { branch: 'feature/01-personalize-profile', taskNum: '01', title: 'Задача 1 — Персонализированный профиль (6 баллов)' },
+              { branch: 'feature/02-add-mean-median-score', taskNum: '02', title: 'Задача 2 — Статистика по оценкам (6 баллов)' },
+              { branch: 'feature/03-password-validation', taskNum: '03', title: 'Задача 3 — Безопасность паролей (6 баллов)' },
+              { branch: 'feature/04-schedule-filter', taskNum: '04', title: 'Задача 4 — Фильтруем расписание (6 баллов)' },
+              { branch: 'feature/05-parent-link', taskNum: '05', title: 'Задача 5 — Родительский контроль (6 баллов)' },
             ];
 
             const issueSpecs = [
-              { num: '06', title: 'Задача 6 — Исправление багов в статистике', labels: ['task','priority-high'] },
-              { num: '07', title: 'Задача 7 — Средний балл на главной странице', labels: ['task','priority-medium'] },
-              { num: '08', title: 'Задача 8 — Деактивация пользователей', labels: ['task','priority-high','security'] },
-              { num: '09', title: 'Задача 9 — Telegram-уведомления о новых оценках', labels: ['task','priority-medium'] },
-              { num: '10', title: 'Задача 10 — Придумай и реализуй собственную фичу', labels: ['task','priority-low','integration'] },
+              { num: '06', title: 'Задача 6 — Исправление багов в статистике (12 баллов)', labels: ['task','priority-high'] },
+              { num: '07', title: 'Задача 7 — Средний балл на главной странице (12 баллов)', labels: ['task','priority-medium'] },
+              { num: '08', title: 'Задача 8 — Деактивация пользователей (12 баллов)', labels: ['task','priority-high','security'] },
+              { num: '09', title: 'Задача 9 — Telegram-уведомления о новых оценках (12 баллов)', labels: ['task','priority-medium'] },
+              { num: '10', title: 'Задача 10 — Придумай и реализуй собственную фичу (22 баллов)', labels: ['task','priority-low','integration'] },
             ];
 
             const { owner, repo } = context.repo;
