@@ -1,0 +1,217 @@
+stages:
+  - setup
+  - merge
+  - create
+
+variables:
+  GIT_STRATEGY: clone
+
+create-prs-and-issues:
+  stage: setup
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "ci@gitlab.com"
+  script:
+    - |
+      mkdir -p task_variables
+      echo "::group::Read tasks"
+      # Read tasks 1-5 for MR descriptions
+      for i in 01 02 03 04 05; do
+        FILE="tasks/${i}.md"
+        if [ -f "$FILE" ]; then
+          cp "$FILE" "task_variables/pr_task_${i}.md"
+          echo "Saved pr_task_${i}.md"
+        fi
+      done
+      # Read tasks 6-10 for issues
+      for i in 06 07 08 09 10; do
+        FILE="tasks/${i}.md"
+        if [ -f "$FILE" ]; then
+          cp "$FILE" "task_variables/task_${i}.md"
+          echo "Saved task_${i}.md"
+        fi
+      done
+      echo "::endgroup::"
+  artifacts:
+    paths:
+      - task_variables/
+    expire_in: 1 hour
+
+merge-main-to-feature:
+  stage: merge
+  image: alpine:latest
+  dependencies:
+    - create-prs-and-issues
+  before_script:
+    - apk add --no-cache git
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "ci@gitlab.com"
+  script:
+    - |
+      # Ensure we have up-to-date refs
+      git fetch --all --prune
+      git checkout main
+      git pull origin main --ff-only || true
+      
+      # Feature branches to process - using space-separated list instead of array
+      FEATURE_BRANCHES="feature/01-personalize-profile feature/02-add-mean-median-score feature/03-password-validation feature/04-schedule-filter feature/05-parent-link"
+      
+      for branch in $FEATURE_BRANCHES; do
+        echo "Processing branch: $branch"
+        
+        # Check if branch exists
+        if ! git show-ref --verify --quiet refs/remotes/origin/$branch; then
+          echo "Branch $branch does not exist, skipping..."
+          continue
+        fi
+        
+        # Checkout the feature branch
+        git checkout $branch
+        
+        # Merge main into feature branch, resolving conflicts by taking feature branch code
+        if ! git merge --allow-unrelated-histories -s ours --no-edit main; then
+          echo "Merge failed for $branch, trying to resolve conflicts..."
+          # If merge fails, reset to feature branch state
+          git reset --hard HEAD
+          git merge --allow-unrelated-histories -s ours --no-edit main || {
+            echo "Failed to merge main into $branch"
+            continue
+          }
+        fi
+        
+        # Push the updated branch
+        git push origin $branch
+        
+        echo "Successfully merged main into $branch"
+      done
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+
+create-mrs-and-issues:
+  stage: create
+  image: alpine:latest
+  dependencies:
+    - create-prs-and-issues
+  before_script:
+    - apk add --no-cache jq curl
+  script:
+    - |
+      # GitLab API configuration
+      GITLAB_API_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
+      
+      # Function to read task content
+      read_task() {
+        local file="task_variables/${1}.md"
+        if [ -f "$file" ]; then
+          cat "$file" | jq -Rs .
+        else
+          echo "\"No description available\"" | jq -Rs .
+        fi
+      }
+      
+      # Feature branches configuration
+      featureBranches='[
+        {"branch": "feature/01-personalize-profile", "taskNum": "01", "title": "Задача 1 — Персонализированный профиль (6 баллов)"},
+        {"branch": "feature/02-add-mean-median-score", "taskNum": "02", "title": "Задача 2 — Статистика по оценкам (6 баллов)"},
+        {"branch": "feature/03-password-validation", "taskNum": "03", "title": "Задача 3 — Безопасность паролей (6 баллов)"},
+        {"branch": "feature/04-schedule-filter", "taskNum": "04", "title": "Задача 4 — Фильтруем расписание (6 баллов)"},
+        {"branch": "feature/05-parent-link", "taskNum": "05", "title": "Задача 5 — Родительский контроль (6 баллов)"}
+      ]'
+      
+      issueSpecs='[
+        {"num": "06", "title": "Задача 6 — Исправление багов в статистике (12 баллов)", "labels": "task,priority-high"},
+        {"num": "07", "title": "Задача 7 — Средний балл на главной странице (12 баллов)", "labels": "task,priority-medium"},
+        {"num": "08", "title": "Задача 8 — Деактивация пользователей (12 баллов)", "labels": "task,priority-high,security"},
+        {"num": "09", "title": "Задача 9 — Telegram-уведомления о новых оценках (12 баллов)", "labels": "task,priority-medium"},
+        {"num": "10", "title": "Задача 10 — Придумай и реализуй собственную фичу (22 баллов)", "labels": "task,priority-low,integration"}
+      ]'
+      
+      # Create Merge Requests for feature branches if missing
+      echo "$featureBranches" | jq -c '.[]' | while read -r branchSpec; do
+        branch=$(echo "$branchSpec" | jq -r '.branch')
+        taskNum=$(echo "$branchSpec" | jq -r '.taskNum')
+        title=$(echo "$branchSpec" | jq -r '.title')
+        
+        echo "Processing MR for branch: $branch"
+        
+        # Check if MR already exists
+        existing_mrs=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          "${GITLAB_API_URL}/merge_requests?source_branch=${branch}&target_branch=main&state=opened")
+        
+        if [ "$(echo "$existing_mrs" | jq length)" -gt 0 ]; then
+          echo "MR for $branch already exists."
+          continue
+        fi
+        
+        # Get task body from file
+        task_body=$(read_task "pr_task_${taskNum}")
+        
+        # Create MR
+        response=$(curl -s -w "%{http_code}" -X POST \
+          --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          --header "Content-Type: application/json" \
+          --data '{
+            "source_branch": "'"$branch"'",
+            "target_branch": "main",
+            "title": "'"$title"'",
+            "description": '"$task_body"',
+            "remove_source_branch": false
+          }' \
+          "${GITLAB_API_URL}/merge_requests")
+        
+        http_code=${response: -3}
+        body=${response%???}
+        
+        if [ "$http_code" -eq 201 ]; then
+          echo "MR created for $branch: $title"
+        else
+          echo "Failed to create MR for $branch. HTTP code: $http_code"
+          echo "Response: $body"
+        fi
+      done
+      
+      # Create issues 6-10 if missing
+      echo "$issueSpecs" | jq -c '.[]' | while read -r issueSpec; do
+        num=$(echo "$issueSpec" | jq -r '.num')
+        title=$(echo "$issueSpec" | jq -r '.title')
+        labels=$(echo "$issueSpec" | jq -r '.labels')
+        
+        echo "Processing issue: $title"
+        
+        # Check if issue already exists
+        existing_issues=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          "${GITLAB_API_URL}/issues?search=$(echo "$title" | sed 's/ /%20/g')")
+        
+        if echo "$existing_issues" | jq -e ".[] | select(.title == \"$title\")" > /dev/null; then
+          echo "Issue already exists: $title"
+          continue
+        fi
+        
+        # Get issue body from file
+        issue_body=$(read_task "task_${num}")
+        
+        # Create issue
+        response=$(curl -s -w "%{http_code}" -X POST \
+          --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          --header "Content-Type: application/json" \
+          --data '{
+            "title": "'"$title"'",
+            "description": '"$issue_body"',
+            "labels": "'"$labels"'"
+          }' \
+          "${GITLAB_API_URL}/issues")
+        
+        http_code=${response: -3}
+        body=${response%???}
+        
+        if [ "$http_code" -eq 201 ]; then
+          echo "Issue created: $title"
+        else
+          echo "Failed to create issue: $title. HTTP code: $http_code"
+          echo "Response: $body"
+        fi
+      done
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
