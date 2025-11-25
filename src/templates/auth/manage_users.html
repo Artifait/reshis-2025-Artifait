@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Управление пользователями - Электронный дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-users-cog"></i> Управление пользователями</h1>
+        <p>Здесь можно активировать или деактивировать пользователей (только для администратора)</p>
+    </div>
+
+    <div class="form-container">
+        {% if users %}
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:1px solid #eee;">
+                        <th>Имя</th>
+                        <th>Email</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr style="border-bottom:1px solid #f3f3f3;">
+                        <td>{{ user.get_full_name() }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role.value|title }}</td>
+                        <td>
+                            {% if user.is_active %}
+                                <span style="color: #06753D; font-weight:600;">Активен</span>
+                            {% else %}
+                                <span style="color: #B84D00; font-weight:600;">Заблокирован</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                {% if user.id == current_user.id %}
+                                    <!-- Нельзя деактивировать себя -->
+                                    <button type="button" style="margin: 2px;" class="btn btn-secondary" disabled title="Вы не можете изменить свой статус">Н/Д</button>
+                                {% else %}
+                                    {% if user.is_active %}
+                                        <button type="submit" name="action" value="deactivate" style="margin: 2px;" class="btn btn-secondary" onclick="return confirm('Вы уверены, что хотите заблокировать пользователя {{ user.get_full_name() }}?')">
+                                            <i class="fas fa-user-lock"></i> Заблокировать
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" name="action" value="activate" class="btn btn-primary" onclick="return confirm('Восстановить доступ для {{ user.get_full_name() }}?')">
+                                            <i class="fas fa-user-check"></i> Активировать
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-user-plus"></i>
+                <h3>Пользователей нет</h3>
+                <p>Похоже, в системе пока нет зарегистрированных пользователей</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:1rem;">
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Назад</a>
+    </div>
+</div>
+{% endblock %}

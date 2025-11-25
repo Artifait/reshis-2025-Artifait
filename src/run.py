@@ -67,6 +67,31 @@ class CleanArchitectureApp:
         # Регистрация маршрутов
         self._register_blueprints()
         
+        # ====== Проверка активности пользователя перед каждым запросом ======
+        @self.app.before_request
+        def ensure_user_active():
+            from flask import flash, redirect, url_for
+            from flask_login import current_user, logout_user
+
+            # Если пользователь не залогинен — пропускаем
+            if not current_user.is_authenticated:
+                return
+
+            try:
+                # Получаем актуальную запись пользователя из БД (чтобы узнать текущий is_active)
+                user = self.repositories['user'].get_by_id(current_user.id)
+                # Если пользователь не найден или уже деактивирован — разлогиниваем и редиректим
+                if not user or not getattr(user, 'is_active', True):
+                    logout_user()
+                    flash('Ваша учётная запись заблокирована. Обратитесь к администратору.', 'error')
+                    return redirect(url_for('auth.login'))
+            except Exception:
+                # Логируем ошибку
+                # в проде здесь лучше сделать более детальное логирование
+                self.app.logger.exception("Ошибка при проверке статуса пользователя")
+                return
+        # ==================================================================
+
         return self.app
     
     def _init_database(self):

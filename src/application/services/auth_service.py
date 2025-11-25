@@ -104,3 +104,30 @@ class AuthService:
             return self.student_repo.get_all()
             
         return []
+    
+    def set_user_active(self, target_user_id: int, active: bool, admin_user: User) -> tuple[bool, str]:
+        # Проверка прав администратора
+        if not admin_user or not admin_user.is_admin():
+            return False, "Только администратор может менять статус пользователей"
+
+        # Нельзя деактивировать самого себя
+        if admin_user.id == target_user_id and not active:
+            return False, "Администратор не может деактивировать сам себя"
+
+        # Получаем пользователя
+        target = self.user_repo.get_by_id(target_user_id)
+        if not target:
+            return False, "Пользователь не найден"
+
+        # Если статус уже такой — ничего не делаем
+        if bool(target.is_active) == bool(active):
+            return False, "Статус пользователя уже установлен"
+
+        # Меняем статус и сохраняем
+        try:
+            target.is_active = bool(active)
+            self.user_repo.update(target)
+            return True, "Пользователь активирован" if active else "Пользователь деактивирован"
+        except Exception as e:
+            return False, f"Ошибка при изменении статуса пользователя: {str(e)}"
+

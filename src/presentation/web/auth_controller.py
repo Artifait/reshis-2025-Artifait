@@ -18,14 +18,19 @@ class AuthController:
         def login():
             form = LoginForm()
             if form.validate_on_submit():
-                user = self.auth_service.authenticate_user(form.username.data, form.password.data)
-                if user:
-                    from flask_login import login_user
-                    login_user(user, remember=form.remember_me.data)
-                    flash('Вы успешно вошли в систему!', 'success')
-                    return redirect(url_for('main.index'))
+                # Сперва проверяем, не деактивирован ли пользователь
+                user_by_name = self.auth_service.user_repo.get_by_username(form.username.data)
+                if user_by_name and not user_by_name.is_active:
+                    flash('Аккаунт заблокирован. Обратитесь к администратору.', 'error')
                 else:
-                    flash('Неверное имя пользователя или пароль', 'error')
+                    user = self.auth_service.authenticate_user(form.username.data, form.password.data)
+                    if user:
+                        from flask_login import login_user
+                        login_user(user, remember=form.remember_me.data)
+                        flash('Вы успешно вошли в систему!', 'success')
+                        return redirect(url_for('main.index'))
+                    else:
+                        flash('Неверное имя пользователя или пароль', 'error')
             
             return render_template('auth/login.html', form=form)
 
@@ -81,6 +86,39 @@ class AuthController:
         def setup_relationships():
             from flask_login import current_user
             return render_template('auth/setup_relationships.html', user=current_user)
-    
+        
+        @self.bp.route('/manage_users', methods=['GET', 'POST'])
+        @login_required
+        def manage_users():
+            from flask_login import current_user
+            
+            # Только админ имеет доступ
+            if not current_user.is_admin():
+                flash('У вас нет прав для доступа к этой странице', 'error')
+                return redirect(url_for('main.index'))
+
+            # Обработка изменения статуса пользователя (POST)
+            if request.method == 'POST':
+                try:
+                    target_id = int(request.form.get('user_id'))
+                except (TypeError, ValueError):
+                    flash('Неверный идентификатор пользователя', 'error')
+                    return redirect(url_for('auth.manage_users'))
+
+                action = request.form.get('action')
+                if action == 'deactivate':
+                    success, message = self.auth_service.set_user_active(target_id, False, current_user)
+                elif action == 'activate':
+                    success, message = self.auth_service.set_user_active(target_id, True, current_user)
+                else:
+                    success, message = False, "Неизвестное действие"
+
+                flash(message, 'success' if success else 'error')
+                return redirect(url_for('auth.manage_users'))
+
+            # GET: показываем всех пользователей
+            users = self.auth_service.user_repo.get_all()
+            return render_template('auth/manage_users.html', users=users, current_user=current_user)
+
     def get_blueprint(self):
         return self.bp
