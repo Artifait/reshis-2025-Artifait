@@ -123,6 +123,13 @@
                         <div class="student-info">
                             <h3>{{ student.name }}</h3>
                             <p class="student-class">{{ student.class_name }}</p>
+
+                            {% if students_mean is defined and students_mean.get(student.id) is not none %}
+                                <p class="student-mean">Средний балл: <strong>{{ '%.2f' % students_mean.get(student.id) }}</strong></p>
+                            {% elif students_mean is defined and students_mean.get(student.id) is none %}
+                                <p class="student-mean muted">Нет оценок</p>
+                            {% endif %}
+
                             <a href="{{ url_for('students.student_diary', student_id=student.id) }}" class="btn btn-primary">
                                 <i class="fas fa-book-open"></i> Открыть дневник
                             </a>
@@ -161,6 +168,13 @@
                         <div class="student-info">
                             <h3>{{ student.name }}</h3>
                             <p class="student-class">{{ student.class_name }}</p>
+
+                            {% if students_mean is defined and students_mean.get(student.id) is not none %}
+                                <p class="student-mean">Средний балл: <strong>{{ '%.2f' % students_mean.get(student.id) }}</strong></p>
+                            {% elif students_mean is defined and students_mean.get(student.id) is none %}
+                                <p class="student-mean muted">Нет оценок</p>
+                            {% endif %}
+
                             <a href="{{ url_for('students.student_diary', student_id=student.id) }}" class="btn btn-primary">
                                 <i class="fas fa-book-open"></i> Открыть дневник
                             </a>

@@ -79,6 +79,14 @@
 }
 
 /* Карточки учеников */
+.student-mean { 
+    font-weight: 500; 
+} 
+
+.muted {
+    color: #777;
+}
+
 .students-section {
     margin: 3rem 0;
 }

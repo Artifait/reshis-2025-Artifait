@@ -113,4 +113,21 @@ class StudentService:
         )
         
         return self.attendance_repo.create(new_attendance)
-    
+
+    def get_student_mean(self, student_id: int) -> float | None:
+        """
+        Возвращает средний балл для ученика с точностью до 2 знаков.
+        Если оценок нет — возвращает None.
+        """
+        if not student_id:
+            return None
+
+        grades = self.grade_repo.get_by_student(student_id)
+        
+        grade_values = [g.grade for g in grades if g is not None and getattr(g, 'grade', None) is not None]
+
+        if not grade_values:
+            return None
+
+        mean = sum(grade_values) / len(grade_values)
+        return round(mean, 2)
