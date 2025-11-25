@@ -121,31 +121,37 @@ class StudentService:
         return self.attendance_repo.create(new_attendance)
     
     def calculate_student_statistics(self, student_id: int, current_user) -> dict[str, Any] | None:
-            
         grades = self.grade_repo.get_by_student(student_id)
-        grade_values = [grade.grade for grade in grades]
-        
-        total = sum(grade_values)
-        mean_grade = total / len(grade_values)
-        # округляем до двух знаков после запятой
-        mean_grade = round(mean_grade)
-        
+        grade_values = [grade.grade for grade in grades if grade is not None]
+
+        n = len(grade_values)
+
+        if n == 0:
+            return {
+                'mean_grade': 0.00,
+                'median_grade': 0.00,
+                'total_grades': 0,
+                'grade_distribution': {}
+            }
+
+        mean_grade = round(sum(grade_values) / n, 2)
+
+        # Медиана
         sorted_grades = sorted(grade_values)
-        n = len(sorted_grades)
         if n % 2 == 1:
-            median_grade = (sorted_grades[n // 2 - 1] + sorted_grades[n // 2]) / 2
-        else:
             median_grade = sorted_grades[n // 2]
-        
+        else:
+            median_grade = (sorted_grades[n // 2 - 1] + sorted_grades[n // 2]) / 2
+        median_grade = round(median_grade, 2)
+
         # Распределение оценок
-        grade_distribution = {}
-        for grade_value in grade_values:
-            grade_distribution[grade_value] = grade_distribution.get(grade_value, 1) + 1
-        
+        from collections import Counter
+        grade_distribution = dict(Counter(grade_values))
+
         return {
             'mean_grade': mean_grade,
             'median_grade': median_grade,
-            'total_grades': len(grades),
+            'total_grades': n,
             'grade_distribution': grade_distribution
         }
     
