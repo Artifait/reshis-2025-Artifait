@@ -10,25 +10,30 @@ from domain.repositories.grade_repository import IGradeRepository
 from domain.repositories.attendance_repository import IAttendanceRepository
 from domain.repositories.schedule_repository import IScheduleRepository
 from domain.repositories.subject_repository import ISubjectRepository
+from domain.repositories.user_repository import IUserRepository
 from application.services.auth_service import AuthService
-
+from infrastructure.external.telegram_service import TelegramService
 
 class StudentService:
     
-    def __init__(self, 
+    def __init__(self,
                  student_repo: IStudentRepository,
                  grade_repo: IGradeRepository,
                  attendance_repo: IAttendanceRepository,
                  schedule_repo: IScheduleRepository,
                  subject_repo: ISubjectRepository,
-                 auth_service: AuthService):
+                 auth_service: AuthService,
+                 user_repo: IUserRepository,                       
+                 telegram_service: TelegramService | None = None): 
         self.student_repo = student_repo
         self.grade_repo = grade_repo
         self.attendance_repo = attendance_repo
         self.schedule_repo = schedule_repo
         self.subject_repo = subject_repo
         self.auth_service = auth_service
-    
+        self.user_repo = user_repo
+        self.telegram_service = telegram_service
+
     def get_all_students(self, current_user) -> list[Student]:
         if not current_user or not hasattr(current_user, 'id'):
             return []
@@ -76,14 +81,17 @@ class StudentService:
             'subjects': subjects
         }
     
-    def add_grade(self, student_id: int, subject_id: int, grade: int, 
+    def add_grade(self, student_id: int, subject_id: int, grade: int,
                   comment: str, current_user) -> Grade | None:
+        from datetime import date
+        # Базовые проверки доступа
         if not current_user or not hasattr(current_user, 'id'):
             return None
-            
+
         if not self.auth_service.can_edit_student_data(current_user, student_id):
             return None
-            
+
+        # Создаём объект и сохраняем
         new_grade = Grade(
             id=None,
             student_id=student_id,
@@ -92,8 +100,47 @@ class StudentService:
             date=date.today(),
             comment=comment
         )
+
+        created = self.grade_repo.create(new_grade)
+        if not created:
+            return None
+        student = self.student_repo.get_by_id(student_id)
+        if student:
+            user = self.user_repo.get_by_id(student.user_id)
+            telegram_id = user.telegram_id
+
+        try:
+            from markupsafe import escape
+        except Exception:
+            def escape(x): return str(x).replace('<', '&lt;').replace('>', '&gt;')
         
-        return self.grade_repo.create(new_grade)
+        emoji_map = {
+            2: "😢",
+            3: "😐",
+            4: "🙂",
+            5: "😄"
+        }
+        emoji = emoji_map.get(grade, "")
+
+        subj_name = self.subject_repo.get_by_id(subject_id).name
+        grade_str = f"{escape(str(created.grade))} {emoji}"
+        date_str = created.date.strftime('%d.%m.%Y') if getattr(created, 'date', None) else ''
+        comment_text = escape(created.comment or '-')
+        text = (
+            "📚 <b>Новая оценка!</b>\n\n"
+            f"Предмет: {escape(subj_name)}\n"
+            f"Оценка: {grade_str}\n"
+            f"Дата: {date_str}\n"
+            f"Комментарий: {comment_text}"
+        )
+        
+        sent = self.telegram_service.send_message(telegram_id, text)
+        
+        if not sent:
+            from flask import current_app
+            current_app.logger.warning('Telegram-сообщение не отправлено пользователю %s', telegram_id)
+            
+        return created
     
     def add_attendance(self, student_id: int, subject_id: int, present: bool, 
                       reason: str, current_user) -> Attendance | None:

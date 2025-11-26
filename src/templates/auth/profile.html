@@ -23,7 +23,7 @@
                     <p class="profile-username">@{{ user.username }}</p>
                 </div>
             </div>
-            
+
             <div class="profile-details">
                 <div class="detail-item">
                     <label>Email:</label>
@@ -39,11 +39,25 @@
                         {% if user.is_active %}Активен{% else %}Заблокирован{% endif %}
                     </span>
                 </div>
+
+                <div class="detail-item">
+                    <label>Telegram ID:</label>
+                    <span>
+                        {% if user.telegram_id %}
+                            {{ user.telegram_id }}
+                        {% else %}
+                            <em>Не указан</em>
+                        {% endif %}
+                    </span>
+                </div>
             </div>
-            
+
             <div class="profile-actions">
                 <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">
                     <i class="fas fa-key"></i> Изменить пароль
+                </a>
+                <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Редактировать профиль / Telegram ID
                 </a>
                 {% if user.is_parent() or user.is_teacher() %}
                     <a href="{{ url_for('auth.setup_relationships') }}" class="btn btn-info">
@@ -52,7 +66,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         {% if user.is_student() and user.student_profile %}
             <div class="profile-card">
                 <h3><i class="fas fa-graduation-cap"></i> Информация о студенте</h3>

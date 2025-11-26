@@ -18,6 +18,9 @@ from infrastructure.repositories.schedule_repository import ScheduleRepository
 from application.services.auth_service import AuthService
 from application.services.student_service import StudentService
 
+# External services
+from infrastructure.external.telegram_service import TelegramService
+
 # Controllers
 from presentation.web.main_controller import MainController
 from presentation.web.student_controller import StudentController
@@ -48,6 +51,8 @@ class CleanArchitectureApp:
         
         # Конфигурация
         self.app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+        # Поддержка конфигурации для TELEGRAM_BOT_TOKEN (если задано в окружении)
+        self.app.config['TELEGRAM_BOT_TOKEN'] = os.environ.get('TELEGRAM_BOT_TOKEN')
         
         # Инициализация базы данных
         self._init_database()
@@ -94,15 +99,30 @@ class CleanArchitectureApp:
                 self.repositories['student']
             ),
         }
-        
-        # Student service зависит от auth service
+
+        # Инициализируем TelegramService лишь при наличии токена, иначе оставляем None
+        telegram_service = None
+        token = self.app.config.get('TELEGRAM_BOT_TOKEN')
+        if token:
+            try:
+                telegram_service = TelegramService(bot_token=token)
+                self.app.logger.info('TelegramService initialized')
+            except Exception as ex:
+                # Не фатально — продолжаем работу без уведомлений, но фиксируем в логе
+                self.app.logger.exception('Не удалось инициализировать TelegramService: %s', ex)
+        else:
+            self.app.logger.warning('TELEGRAM_BOT_TOKEN не задан — Telegram-уведомления отключены')
+
+        # Student service зависит от auth service и (опционально) telegram_service
         self.services['student'] = StudentService(
             self.repositories['student'],
             self.repositories['grade'],
             self.repositories['attendance'],
             self.repositories['schedule'],
             self.repositories['subject'],
-            self.services['auth']
+            self.services['auth'],
+            self.repositories['user'],
+            telegram_service
         )
     
     def _init_controllers(self):

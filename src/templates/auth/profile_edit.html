@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование профиля - Электронный дневник{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container" role="region" aria-labelledby="profile-edit-title">
+        <header class="page-header" style="margin-bottom:1rem;">
+            <h1 id="profile-edit-title"><i class="fas fa-user-edit"></i> Редактировать профиль</h1>
+        </header>
+
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.first_name.label() }}
+                {{ form.first_name(class="form-control", placeholder="Имя") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.last_name.label() }}
+                {{ form.last_name(class="form-control", placeholder="Фамилия") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.telegram_id.label() }}
+                {{ form.telegram_id(class="form-control", placeholder="Например: 123456789") }}
+                <small class="form-note" style="display:block; margin-top:0.5rem; color: #6D6D6D; font-size:0.9rem;">
+                    Укажите ваш Telegram ID, чтобы получать уведомления о новых оценках.
+                </small>
+            </div>
+
+            <div class="form-actions">
+                {{ form.submit(class="btn btn-primary") }}
+                {{ form.delete_telegram(class="btn btn-secondary") }}
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

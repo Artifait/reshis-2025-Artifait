@@ -27,7 +27,8 @@ class User(UserMixin):
     is_active: bool = True
     created_at: datetime | None = None
     student_profile: Student | None = None
-    
+    telegram_id: Optional[str] = None
+
     def get_full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
     
@@ -48,6 +49,12 @@ class User(UserMixin):
     
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
+    
+    def set_telegram_id(self, tid: str) -> None:
+        self.telegram_id = tid
+    
+    def remove_telegram_id(self) -> None:
+        self.telegram_id = None
     
     def __repr__(self):
         return f'<User {self.username} ({self.role.value})>'

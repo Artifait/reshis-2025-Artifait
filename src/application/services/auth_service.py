@@ -35,7 +35,8 @@ class AuthService:
             role=role,
             first_name=first_name,
             last_name=last_name,
-            is_active=True
+            is_active=True,
+            telegram_id=None
         )
         user.set_password(password)
         
@@ -44,6 +45,9 @@ class AuthService:
             return user, None
         except Exception as e:
             return None, f"Ошибка при создании пользователя: {str(e)}"
+
+    def update_user(self, user: User) -> User:
+        return self.user_repo.update(user)
     
     def can_view_student_data(self, user: User, student_id: int) -> bool:
         if not user or not user.is_active:

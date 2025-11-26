@@ -53,7 +53,8 @@ def init_database():
                 first_name=user_data['first_name'],
                 last_name=user_data['last_name'],
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
+                telegram_id=user_data.get('telegram_id')
             )
             user.set_password(user_data['password'])
             user = user_repo.create(user)
