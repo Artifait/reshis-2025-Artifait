@@ -13,6 +13,7 @@ from infrastructure.repositories.subject_repository import SubjectRepository
 from infrastructure.repositories.grade_repository import GradeRepository
 from infrastructure.repositories.attendance_repository import AttendanceRepository
 from infrastructure.repositories.schedule_repository import ScheduleRepository
+from infrastructure.repositories.telegram_repository import TelegramBindRepository, TelegramVerificationRepository, TelegramAuditRepository
 
 # Application Services
 from application.services.auth_service import AuthService
@@ -85,6 +86,9 @@ class CleanArchitectureApp:
             'grade': GradeRepository(self.db_connection),
             'attendance': AttendanceRepository(self.db_connection),
             'schedule': ScheduleRepository(self.db_connection),
+            'telegram_bind': TelegramBindRepository(self.db_connection),
+            'telegram_verification': TelegramVerificationRepository(self.db_connection),
+            'telegram_audit': TelegramAuditRepository(self.db_connection),
         }
     
     def _init_services(self):

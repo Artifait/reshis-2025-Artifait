@@ -28,6 +28,10 @@ class User(UserMixin):
     created_at: datetime | None = None
     student_profile: Student | None = None
     
+    telegram_id: str | None = None
+    telegram_2fa_enabled: bool = True
+    last_login_ip: str | None = None
+
     def get_full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
     

@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     is_active BOOLEAN DEFAULT 1,
+    telegram_id TEXT,
+    telegram_2fa_enabled INTEGER DEFAULT 1,
+    last_login_ip VARCHAR(45),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -85,6 +88,42 @@ CREATE TABLE IF NOT EXISTS teacher_subject (
     FOREIGN KEY (teacher_id) REFERENCES users(id),
     FOREIGN KEY (subject_id) REFERENCES subjects(id)
 );
+
+-- Запросы для Telegram привязки/верификации
+CREATE TABLE IF NOT EXISTS telegram_bind_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    code VARCHAR(16) NOT NULL,
+    status VARCHAR(20) NOT NULL, -- pending, confirmed, cancelled, failed, expired
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME,
+    attempts INTEGER DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS telegram_verifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL,
+    type VARCHAR(20) NOT NULL, -- bind, login
+    status VARCHAR(20) NOT NULL, -- pending, confirmed, denied, expired
+    ip VARCHAR(45),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME,
+    attempts INTEGER DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS telegram_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    event_type VARCHAR(50),
+    ip VARCHAR(45),
+    ua TEXT,
+    details TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 """
 
 INDEXES_SQL = """
@@ -106,4 +145,12 @@ CREATE INDEX IF NOT EXISTS idx_parent_child_parent ON parent_child(parent_id);
 CREATE INDEX IF NOT EXISTS idx_parent_child_child ON parent_child(child_id);
 CREATE INDEX IF NOT EXISTS idx_teacher_subject_teacher ON teacher_subject(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_teacher_subject_subject ON teacher_subject(subject_id);
+
+-- Индексы для Telegram
+CREATE INDEX IF NOT EXISTS idx_telegram_bind_user ON telegram_bind_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_telegram_bind_status ON telegram_bind_requests(status);
+CREATE INDEX IF NOT EXISTS idx_telegram_verif_user ON telegram_verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_telegram_verif_token ON telegram_verifications(token);
+CREATE INDEX IF NOT EXISTS idx_telegram_verif_status ON telegram_verifications(status);
+CREATE INDEX IF NOT EXISTS idx_telegram_audit_user ON telegram_audit(user_id);
 """

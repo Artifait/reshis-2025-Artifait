@@ -11,13 +11,15 @@ class UserRepository(IUserRepository):
     
     def create(self, user: User) -> User:
         query = """
-        INSERT INTO users (username, email, password_hash, role, first_name, last_name, is_active, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (username, email, password_hash, role, first_name, last_name, is_active, telegram_id, telegram_2fa_enabled, last_login_ip, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         user_id = self.db.execute_update(
             query,
             (user.username, user.email, user.password_hash, user.role.value,
-             user.first_name, user.last_name, user.is_active, datetime.utcnow())
+             user.first_name, user.last_name, user.is_active,
+             user.telegram_id, int(user.telegram_2fa_enabled), user.last_login_ip,
+             datetime.utcnow())
         )
         user.id = user_id
         return user
@@ -57,13 +59,15 @@ class UserRepository(IUserRepository):
         query = """
         UPDATE users 
         SET username = ?, email = ?, password_hash = ?, role = ?, 
-            first_name = ?, last_name = ?, is_active = ?
+            first_name = ?, last_name = ?, is_active = ?, telegram_id = ?, telegram_2fa_enabled = ?, last_login_ip = ?
         WHERE id = ?
         """
         self.db.execute_update(
             query,
             (user.username, user.email, user.password_hash, user.role.value,
-             user.first_name, user.last_name, user.is_active, user.id)
+             user.first_name, user.last_name, user.is_active,
+             user.telegram_id, int(user.telegram_2fa_enabled), user.last_login_ip,
+             user.id)
         )
         return user
     
@@ -82,5 +86,8 @@ class UserRepository(IUserRepository):
             first_name=row['first_name'],
             last_name=row['last_name'],
             is_active=bool(row['is_active']),
-            created_at=datetime.fromisoformat(row['created_at']) if row['created_at'] else None
+            created_at=datetime.fromisoformat(row['created_at']) if row['created_at'] else None,
+            telegram_id=row.get('telegram_id'),
+            telegram_2fa_enabled=bool(row.get('telegram_2fa_enabled', 1)),
+            last_login_ip=row.get('last_login_ip')
         )
