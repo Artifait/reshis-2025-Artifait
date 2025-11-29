@@ -1,17 +1,26 @@
-from domain.entities.telegram import TelegramBindRequest, TelegramVerification, TelegramAudit
+from domain.entities.telegram import TelegramChatToken, TelegramVerification, TelegramAudit
 from typing import Optional, List
 
-class ITelegramBindRepository:
-    def create(self, bind: TelegramBindRequest) -> TelegramBindRequest:
+class ITelegramChatTokenRepository:
+    def create(self, token: TelegramChatToken) -> TelegramChatToken:
         raise NotImplementedError
-
-    def get_by_id(self, bind_id: int) -> Optional[TelegramBindRequest]:
+    
+    def get_by_token(self, token_str: str) -> Optional[TelegramChatToken]:
         raise NotImplementedError
-
-    def get_pending_by_user(self, user_id: int) -> List[TelegramBindRequest]:
+    
+    def get_by_chat_id(self, chat_id: str) -> Optional[TelegramChatToken]:
         raise NotImplementedError
-
-    def update(self, bind: TelegramBindRequest) -> TelegramBindRequest:
+    
+    def bind_token_to_user(self, token_str: str, user_id: int) -> Optional[TelegramChatToken]:
+        raise NotImplementedError
+    
+    def get_by_user_id(self, user_id: int) -> Optional[TelegramChatToken]:
+        raise NotImplementedError
+    
+    def unbind_tokens_by_user(self, user_id: int) -> int:
+        raise NotImplementedError
+    
+    def upsert_token_for_chat(self, chat_id: str, token_str: str, username: str | None) -> TelegramChatToken:
         raise NotImplementedError
 
 class ITelegramVerificationRepository:

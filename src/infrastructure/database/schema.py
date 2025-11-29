@@ -89,16 +89,14 @@ CREATE TABLE IF NOT EXISTS teacher_subject (
     FOREIGN KEY (subject_id) REFERENCES subjects(id)
 );
 
--- Запросы для Telegram привязки/верификации
-CREATE TABLE IF NOT EXISTS telegram_bind_requests (
+CREATE TABLE IF NOT EXISTS telegram_chat_tokens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    code VARCHAR(16) NOT NULL,
-    status VARCHAR(20) NOT NULL, -- pending, confirmed, cancelled, failed, expired
+    chat_id TEXT NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    user_id INTEGER,
+    username TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME,
-    attempts INTEGER DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    bound_at DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS telegram_verifications (
@@ -147,8 +145,8 @@ CREATE INDEX IF NOT EXISTS idx_teacher_subject_teacher ON teacher_subject(teache
 CREATE INDEX IF NOT EXISTS idx_teacher_subject_subject ON teacher_subject(subject_id);
 
 -- Индексы для Telegram
-CREATE INDEX IF NOT EXISTS idx_telegram_bind_user ON telegram_bind_requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_telegram_bind_status ON telegram_bind_requests(status);
+CREATE INDEX IF NOT EXISTS idx_telegram_chat_tokens_token ON telegram_chat_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_telegram_chat_tokens_user ON telegram_chat_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_verif_user ON telegram_verifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_verif_token ON telegram_verifications(token);
 CREATE INDEX IF NOT EXISTS idx_telegram_verif_status ON telegram_verifications(status);

@@ -13,11 +13,12 @@ from infrastructure.repositories.subject_repository import SubjectRepository
 from infrastructure.repositories.grade_repository import GradeRepository
 from infrastructure.repositories.attendance_repository import AttendanceRepository
 from infrastructure.repositories.schedule_repository import ScheduleRepository
-from infrastructure.repositories.telegram_repository import TelegramBindRepository, TelegramVerificationRepository, TelegramAuditRepository
+from infrastructure.repositories.telegram_repository import TelegramChatTokenRepository, TelegramAuditRepository
 
 # Application Services
 from application.services.auth_service import AuthService
 from application.services.student_service import StudentService
+from application.services.telegram_service import TelegramService
 
 # Controllers
 from presentation.web.main_controller import MainController
@@ -68,6 +69,13 @@ class CleanArchitectureApp:
         # Регистрация маршрутов
         self._register_blueprints()
         
+        # expose telegram service to app (для webhook blueprint)
+        self.app.config['telegram_service'] = self.services.get('telegram')
+
+        from presentation.web.telegram_webhook import bp as telegram_webhook_bp
+        self.app.register_blueprint(telegram_webhook_bp, url_prefix='/')
+
+        
         return self.app
     
     def _init_database(self):
@@ -86,18 +94,26 @@ class CleanArchitectureApp:
             'grade': GradeRepository(self.db_connection),
             'attendance': AttendanceRepository(self.db_connection),
             'schedule': ScheduleRepository(self.db_connection),
-            'telegram_bind': TelegramBindRepository(self.db_connection),
-            'telegram_verification': TelegramVerificationRepository(self.db_connection),
+            # telegram repositories
+            'telegram_chat_token': TelegramChatTokenRepository(self.db_connection),
             'telegram_audit': TelegramAuditRepository(self.db_connection),
         }
     
     def _init_services(self):
+        # auth service (expects user_repo, student_repo)
         self.services = {
             'auth': AuthService(
                 self.repositories['user'],
                 self.repositories['student']
             ),
         }
+        # telegram service (webhook/token flow)
+        self.services['telegram'] = TelegramService(
+            user_repo=self.repositories['user'],
+            chat_token_repo=self.repositories['telegram_chat_token'],
+            audit_repo=self.repositories['telegram_audit'],
+            bot_token=os.environ.get('TELEGRAM_BOT_TOKEN')
+        )
         
         # Student service зависит от auth service
         self.services['student'] = StudentService(
@@ -113,7 +129,7 @@ class CleanArchitectureApp:
         self.controllers = {
             'main': MainController(self.services['student']),
             'student': StudentController(self.services['student']),
-            'auth': AuthController(self.services['auth']),
+            'auth': AuthController(self.services['auth'], self.services.get('telegram')),
             'reports': ReportsController(self.services['student'])
         }
     

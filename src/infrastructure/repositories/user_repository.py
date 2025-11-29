@@ -87,7 +87,7 @@ class UserRepository(IUserRepository):
             last_name=row['last_name'],
             is_active=bool(row['is_active']),
             created_at=datetime.fromisoformat(row['created_at']) if row['created_at'] else None,
-            telegram_id=row.get('telegram_id'),
-            telegram_2fa_enabled=bool(row.get('telegram_2fa_enabled', 1)),
-            last_login_ip=row.get('last_login_ip')
+            telegram_id=row['telegram_id'],
+            telegram_2fa_enabled=bool(row['telegram_2fa_enabled']),
+            last_login_ip=row['last_login_ip']
         )

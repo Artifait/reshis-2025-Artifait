@@ -2,14 +2,14 @@ from dataclasses import dataclass
 from datetime import datetime
 
 @dataclass
-class TelegramBindRequest:
+class TelegramChatToken:
     id: int | None
-    user_id: int
-    code: str
-    status: str  # pending, confirmed, cancelled, failed, expired
+    chat_id: str
+    token: str
+    user_id: int | None = None
+    username: str | None = None
     created_at: datetime | None = None
-    expires_at: datetime | None = None
-    attempts: int = 0
+    bound_at: datetime | None = None
 
 @dataclass
 class TelegramVerification:

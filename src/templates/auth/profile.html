@@ -39,6 +39,24 @@
                         {% if user.is_active %}Активен{% else %}Заблокирован{% endif %}
                     </span>
                 </div>
+                <!-- Telegram block -->
+                <div class="detail-item">
+                    <label>Telegram:</label>
+                    <div>
+                        {% if user.telegram_id %}
+                            {% if user.telegram_username %}
+                                <span>Привязан: @{{ user.telegram_username }}</span>
+                            {% else %}
+                                <span>Привязан (id): {{ user.telegram_id }}</span>
+                            {% endif %}
+                            <button id="btn-unbind-telegram" class="btn btn-secondary" style="margin-left: 1rem;">Открепить</button>
+                        {% else %}
+                            <span>Не привязан</span>
+                            <button id="btn-bind-telegram" class="btn btn-primary" style="margin-left: 1rem;">Привязать Telegram</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- /Telegram block -->
             </div>
             
             <div class="profile-actions">
@@ -112,4 +130,116 @@
         {% endif %}
     </div>
 </div>
+
+<div id="telegram-modal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width:820px; display:flex; gap:1rem; align-items:flex-start;">
+    <div style="flex:1;">
+      <h3>Привязать Telegram</h3>
+      <p>Откройте нашего бота и нажмите <code>/start</code>. Бот пришлёт вам уникальный токен — скопируйте его и вставьте в поле снизу.</p>
+
+      <div class="form-group">
+        <label for="telegram_token">Токен</label>
+        <input id="telegram_token" class="form-control" placeholder="Вставьте токен сюда" />
+        <div id="token-error" class="error" style="display:none;"></div>
+      </div>
+
+      <div class="form-actions" style="justify-content:flex-end; margin-top:1rem;">
+        <button id="confirm-token" class="btn btn-primary">Подтвердить</button>
+        <button id="close-telegram-modal" class="btn btn-secondary" style="margin-left:0.5rem;">Отмена</button>
+      </div>
+
+      <div id="telegram-msg" style="margin-top:1rem;"></div>
+    </div>
+
+    <div style="width:240px; text-align:center;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://t.me/CUDnevnikB_bot" alt="QR bot" style="border-radius:8px;"/>
+      <div style="margin-top:0.75rem;">
+        <a href="https://t.me/CUDnevnikB_bot" target="_blank" class="btn btn-secondary" style="display:inline-block;">Открыть бот</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:1000; }
+.modal-content { background: white; padding: 1.25rem; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('telegram-modal');
+    const btnBind = document.getElementById('btn-bind-telegram');
+    const btnUnbind = document.getElementById('btn-unbind-telegram');
+    const closeBtn = document.getElementById('close-telegram-modal');
+    const confirmBtn = document.getElementById('confirm-token');
+    const tokenInput = document.getElementById('telegram_token');
+    const msgBox = document.getElementById('telegram-msg');
+    const errorBox = document.getElementById('token-error');
+
+    function openModal(){ modal.style.display = 'flex'; msgBox.innerText=''; errorBox.style.display='none'; tokenInput.value=''; tokenInput.focus(); }
+    function closeModal(){ modal.style.display = 'none'; }
+
+    if (btnBind) btnBind.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    // validation: token must be alnum + - _ and length >=8
+    function validToken(t){
+        if(!t) return {ok:false,msg:'Введите токен'};
+        if(t.length < 8) return {ok:false,msg:'Токен слишком короткий'};
+        if(!/^[A-Za-z0-9_-]{8,128}$/.test(t)) return {ok:false,msg:'Токен содержит недопустимые символы'};
+        return {ok:true};
+    }
+
+    confirmBtn.addEventListener('click', async () => {
+        const token = tokenInput.value.trim();
+        errorBox.style.display = 'none';
+        const v = validToken(token);
+        if(!v.ok){
+            errorBox.innerText = v.msg; errorBox.style.display='block'; return;
+        }
+        // send
+        msgBox.innerText = 'Подтверждаем...';
+        try {
+            const resp = await fetch('{{ url_for("auth.profile_telegram_verify") }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ token })
+            });
+            const data = await resp.json();
+            if (resp.ok && data.ok) {
+                // clear input
+                tokenInput.value = '';
+                // reload to show flash and updated profile
+                window.location.reload();
+            } else {
+                errorBox.innerText = data.message || 'Ошибка верификации';
+                errorBox.style.display = 'block';
+                tokenInput.value = '';
+            }
+        } catch (e) {
+            errorBox.innerText = 'Ошибка сети';
+            errorBox.style.display = 'block';
+        } finally {
+            msgBox.innerText = '';
+        }
+    });
+
+    if (btnUnbind) {
+        btnUnbind.addEventListener('click', async () => {
+            if (!confirm('Открепить Telegram от аккаунта?')) return;
+            try {
+                const resp = await fetch('{{ url_for("auth.profile_telegram_unbind") }}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                window.location.reload();
+            } catch (e) {
+                alert('Ошибка открепления');
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %}

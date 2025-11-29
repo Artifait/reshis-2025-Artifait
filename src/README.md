@@ -33,21 +33,48 @@ src/
 ## Установка и запуск
 
 1. **Активация виртуального окружения:**
+
 ```bash
 source venv/bin/activate
 ```
 
 2. **Установка зависимостей:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 3. **Инициализация базы данных:**
+
 ```bash
 python init_data.py
 ```
 
-4. **Запуск приложения:**
+4. **Запуск приложения(DEV):**
+
+- Запуск ngrok:
+
+```bash
+ngrok http 5001
+```
+
+#### для запуска -> [@CUDnevnikB_bot](https://t.me/CUDnevnikB_bot)
+
+- Установить webhook у Telegram:
+
+```bash
+curl -s -X POST "https://api.telegram.org/bot8292453829:AAFRQTqGhzuCUmyPzsaPBrFFks7cixOBoHE/setWebhook" \
+  -d "url=https://<NGROK_HOST>/webhook/telegram"
+```
+
+- Установить переменную окружений tg bot token
+
+```cmd
+set TELEGRAM_BOT_TOKEN=8292453829:AAFRQTqGhzuCUmyPzsaPBrFFks7cixOBoHE
+```
+
+Запуск приложений:
+
 ```bash
 python run.py
 ```
@@ -59,14 +86,16 @@ python run.py
 Приложение поддерживает ролевую модель с разными уровнями доступа:
 
 ### Роли пользователей:
+
 - **Школьник** - видит только свои оценки и расписание
 - **Родитель** - видит данные своих детей
 - **Учитель** - может выставлять оценки и отмечать посещаемость
 - **Администратор** - полный доступ ко всем функциям
 
 ### Тестовые учетные данные:
+
 - **Администратор:** admin / admin123
-- **Учитель:** teacher1 / teacher123  
+- **Учитель:** teacher1 / teacher123
 - **Родитель:** parent1 / parent123
 - **Школьники:**
   - student1 / student123 (Иван Петров)
