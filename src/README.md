@@ -81,6 +81,32 @@ python run.py
 
 5. **Откройте браузер и перейдите по адресу:** http://localhost:5001
 
+## Для теста 2FA
+
+После привязки тг у первого студента:
+
+0. Зайти в бд
+
+```
+sqlite3 instance/diary.db
+```
+
+1. Смотрим Ip
+
+```
+SELECT id, username, last_login_ip FROM users WHERE username = 'student1';
+```
+
+2. Меняем
+
+```
+UPDATE users
+SET last_login_ip = '94.125.100.108'
+WHERE username = 'student1';
+```
+
+3. Выходим из аккаунта и пытаемся заного зайти
+
 ## Система авторизации
 
 Приложение поддерживает ролевую модель с разными уровнями доступа:

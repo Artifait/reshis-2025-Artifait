@@ -14,6 +14,7 @@ from infrastructure.repositories.grade_repository import GradeRepository
 from infrastructure.repositories.attendance_repository import AttendanceRepository
 from infrastructure.repositories.schedule_repository import ScheduleRepository
 from infrastructure.repositories.telegram_repository import TelegramChatTokenRepository, TelegramAuditRepository
+from infrastructure.repositories.telegram_verification_repository import TelegramVerificationRepository
 
 # Application Services
 from application.services.auth_service import AuthService
@@ -97,6 +98,7 @@ class CleanArchitectureApp:
             # telegram repositories
             'telegram_chat_token': TelegramChatTokenRepository(self.db_connection),
             'telegram_audit': TelegramAuditRepository(self.db_connection),
+            'telegram_verification': TelegramVerificationRepository(self.db_connection),
         }
     
     def _init_services(self):
@@ -112,6 +114,7 @@ class CleanArchitectureApp:
             user_repo=self.repositories['user'],
             chat_token_repo=self.repositories['telegram_chat_token'],
             audit_repo=self.repositories['telegram_audit'],
+            chat_verification_repo=self.repositories['telegram_verification'],
             bot_token=os.environ.get('TELEGRAM_BOT_TOKEN')
         )
         
@@ -161,5 +164,8 @@ def create_app():
 
 
 if __name__ == '__main__':
-    app = create_app()
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    
+    app = create_app()  
     app.run(debug=True, port=5001)

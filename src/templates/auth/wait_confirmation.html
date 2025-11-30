@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Подтвердите вход — CUDnevnik{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="form-container" style="max-width:640px; margin:3rem auto;">
+    <h3>Подтвердите вход через Telegram</h3>
+    <p>Мы отправили запрос в ваш Telegram. Пожалуйста, подтвердите вход в чате бота или нажмите «Отменить».</p>
+    <div id="status" style="margin-top:1rem;">Статус: <strong>Ожидание</strong></div>
+    <div style="margin-top:1rem;">
+      <button id="cancel" class="btn btn-secondary">Отменить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const token = "{{ token }}";
+  const pollUrl = "{{ url_for('auth.login_poll') }}?token=" + encodeURIComponent(token);
+  const finishUrl = "{{ url_for('auth.login_finish') }}";
+  const statusEl = document.getElementById('status');
+  const cancelBtn = document.getElementById('cancel');
+
+  let stopped = false;
+
+  async function poll(){
+    if(stopped) return;
+    try{
+      const r = await fetch(pollUrl, { cache: 'no-store' });
+      const data = await r.json();
+      if(!data.ok){
+        statusEl.innerText = 'Ошибка: ' + (data.message || 'unknown');
+        return;
+      }
+      const s = data.status;
+      if(s === 'pending'){
+        statusEl.innerHTML = 'Статус: <strong>Ожидание</strong>';
+        setTimeout(poll, 2500);
+      } else if(s === 'confirmed'){
+        statusEl.innerHTML = 'Статус: <strong>Подтвержден</strong>. Выполняем вход...';
+        const res = await fetch(finishUrl, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ token })
+        });
+        const j = await res.json();
+        if(j.ok){
+          window.location.href = j.redirect || '/';
+        } else {
+          statusEl.innerText = 'Ошибка: ' + (j.message || '');
+        }
+      } else if(s === 'denied'){
+        statusEl.innerHTML = 'Статус: <strong>Отклонён</strong>. Если это не вы — то что вы тут делаете.';
+      } else if(s === 'expired'){
+        statusEl.innerHTML = 'Статус: <strong>Просрочен</strong>. Попробуйте войти снова.';
+      } else {
+        statusEl.innerHTML = 'Статус: <strong>' + s + '</strong>';
+      }
+    } catch(e){
+      statusEl.innerText = 'Ошибка сети, повтор через 3 сек';
+      setTimeout(poll, 3000);
+    }
+  }
+  poll();
+
+  cancelBtn.addEventListener('click', function(){
+    stopped = true;
+    window.location.href = "{{ url_for('auth.login') }}";
+  });
+})();
+</script>
+{% endblock %}

@@ -23,9 +23,27 @@ class AuthController:
                 user = self.auth_service.authenticate_user(form.username.data, form.password.data)
                 if user:
                     from flask_login import login_user
-                    login_user(user, remember=form.remember_me.data)
-                    flash('Вы успешно вошли в систему!', 'success')
-                    return redirect(url_for('main.index'))
+                    from flask import request as flask_request
+                    current_ip = flask_request.remote_addr or '0.0.0.0'
+                    last_ip = getattr(user, 'last_login_ip', None)
+                    telegram_enabled = getattr(user, 'telegram_2fa_enabled', True)
+                    
+                    # имеем ли мы chat для пользователя
+                    token_row = self.telegram_service.chat_token_repo.get_by_user_id(user.id)
+                    has_chat = bool(token_row)
+                    
+                    if last_ip and last_ip != current_ip and telegram_enabled and has_chat:
+                        # create verification and show wait page
+                        verif = self.telegram_service.create_login_verification(user, current_ip)
+                        token = verif.token if verif else ''
+                        return render_template('auth/wait_confirmation.html', token=token)
+                    else:
+                        # normal login
+                        login_user(user, remember=form.remember_me.data)
+                        user.last_login_ip = current_ip
+                        self.auth_service.user_repo.update(user)
+                        flash('Вы успешно вошли в систему!' + str(last_ip) + str(telegram_enabled) + str(has_chat) , 'success')
+                        return redirect(url_for('main.index'))
                 else:
                     flash('Неверное имя пользователя или пароль', 'error')
             
@@ -120,12 +138,11 @@ class AuthController:
         def profile_telegram_unbind():
             """
             POST: открепить telegram от текущего пользователя.
-            Обнуляем users.telegram_id, выключаем telegram_2fa_enabled и освобождаем token-строки.
+            Обнуляем users.telegram_id и освобождаем token-строки.
             """
             try:
                 # очистим поля в users
                 current_user.telegram_id = None
-                current_user.telegram_2fa_enabled = False
                 # обновляем пользователя в репозитории (AuthService должен иметь user_repo)
                 try:
                     self.auth_service.user_repo.update(current_user)
@@ -144,6 +161,50 @@ class AuthController:
             
             flash('Telegram успешно откреплен', 'success')
             return jsonify({"ok": True, "message": "Откреплено"}), 200
+        
+        @self.bp.route('/login/poll')
+        def login_poll():
+            token = (request.args.get('token') or '').strip()
+            if not token:
+                return jsonify({"ok": False, "message": "token required"}), 400
+            try:
+                # expire old ones first
+                if self.telegram_service and self.telegram_service.chat_verification_repo:
+                    self.telegram_service.chat_verification_repo.expire_old()
+                ver = self.telegram_service.chat_verification_repo.get_by_token(token)
+                if not ver:
+                    return jsonify({"ok": False, "message": "not found"}), 404
+                return jsonify({"ok": True, "status": ver.status})
+            except Exception as e:
+                return jsonify({"ok": False, "message": str(e)}), 500
+        
+        @self.bp.route('/login/finish', methods=['POST'])
+        def login_finish():
+            data = request.get_json() or {}
+            token = (data.get('token') or '').strip()
+            if not token:
+                return jsonify({"ok": False, "message": "token required"}), 400
+            try:
+                ver = self.telegram_service.chat_verification_repo.get_by_token(token)
+                if not ver:
+                    return jsonify({"ok": False, "message": "verification not found"}), 404
+                if ver.status != 'confirmed':
+                    return jsonify({"ok": False, "message": "not confirmed"}), 400
+                # OK — login user
+                user = self.auth_service.user_repo.get_by_id(ver.user_id)
+                if not user:
+                    return jsonify({"ok": False, "message": "user not found"}), 404
+                from flask_login import login_user
+                login_user(user)
+                # update last_login_ip from verification
+                try:
+                    user.last_login_ip = ver.ip
+                    self.auth_service.user_repo.update(user)
+                except Exception:
+                    pass
+                return jsonify({"ok": True, "redirect": url_for('main.index')})
+            except Exception as e:
+                return jsonify({"ok": False, "message": str(e)}), 500
     
     def get_blueprint(self):
         return self.bp
