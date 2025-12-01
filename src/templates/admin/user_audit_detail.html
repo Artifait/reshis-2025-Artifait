@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Аудит — запись #{{ audit.id }}{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1><i class="fas fa-file-alt"></i> Аудит — запись #{{ audit.id }}</h1>
+    <p>Пользователь: {{ user.get_full_name() }} (@{{ user.username }})</p>
+  </div>
+
+  <div class="form-container">
+    <div style="margin-bottom:1rem;">
+      <strong>Время:</strong> {{ audit.created_at }}<br/>
+      <strong>Тип:</strong> {{ audit.event_type }}<br/>
+      <strong>IP:</strong> {{ audit.ip or '—' }}<br/>
+      <strong>UA:</strong> <span style="word-break:break-word;">{{ audit.ua or '—' }}</span>
+    </div>
+
+    <div>
+      <h3>Details</h3>
+      <pre style="background:#f8f9fa; padding:1rem; border-radius:8px; overflow:auto; max-height:60vh; white-space:pre-wrap;">{{ pretty_details }}</pre>
+    </div>
+
+    <div style="margin-top:1rem;">
+      <a class="btn btn-secondary" href="{{ url_for('admin.user_audit', user_id=user.id) }}">Назад</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

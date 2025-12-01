@@ -26,6 +26,7 @@ from presentation.web.main_controller import MainController
 from presentation.web.student_controller import StudentController
 from presentation.web.auth_controller import AuthController
 from presentation.web.reports_controller import ReportsController
+from presentation.web.admin_controller import AdminController
 
 # Domain entities
 from domain.entities.user import User
@@ -132,8 +133,9 @@ class CleanArchitectureApp:
         self.controllers = {
             'main': MainController(self.services['student']),
             'student': StudentController(self.services['student']),
-            'auth': AuthController(self.services['auth'], self.services.get('telegram')),
-            'reports': ReportsController(self.services['student'])
+            'auth': AuthController(self.services['auth'], self.services.get('telegram'), self.repositories.get('telegram_audit')),
+            'reports': ReportsController(self.services['student']),
+            'admin': AdminController(self.repositories['user'], self.repositories['telegram_audit'], self.repositories['telegram_chat_token'])
         }
     
     def _init_login_manager(self):
@@ -156,6 +158,7 @@ class CleanArchitectureApp:
         self.app.register_blueprint(self.controllers['student'].get_blueprint(), url_prefix='/student')
         self.app.register_blueprint(self.controllers['auth'].get_blueprint(), url_prefix='/auth')
         self.app.register_blueprint(self.controllers['reports'].get_blueprint(), url_prefix='/reports')
+        self.app.register_blueprint(self.controllers['admin'].get_blueprint(), url_prefix='/admin')
 
 
 def create_app():

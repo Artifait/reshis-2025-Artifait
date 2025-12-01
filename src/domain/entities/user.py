@@ -55,6 +55,17 @@ class User(UserMixin):
     
     def __repr__(self):
         return f'<User {self.username} ({self.role.value})>'
+    
+    def telegram_display(self) -> str:
+        if getattr(self, 'telegram_username', None):
+            uname = self.telegram_username
+            return f"@{uname}" if not uname.startswith('@') else uname
+        if self.telegram_id:
+            return str(self.telegram_id)
+        return '—'
+    
+    def is_telegram_2fa_enabled(self) -> bool:
+        return bool(self.telegram_2fa_enabled)
 
 
 @dataclass

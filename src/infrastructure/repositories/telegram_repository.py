@@ -126,3 +126,33 @@ class TelegramAuditRepository(ITelegramAuditRepository):
         audit.id = audit_id
         audit.created_at = created_at
         return audit
+
+    def get_by_user_id(self, user_id: int) -> list:
+        rows = self.db.execute_query("SELECT * FROM telegram_audit WHERE user_id = ? ORDER BY created_at DESC LIMIT 500", (user_id,))
+        result = []
+        for r in rows:
+            result.append({
+                'id': r['id'],
+                'user_id': r['user_id'],
+                'event_type': r['event_type'],
+                'ip': r['ip'],
+                'ua': r['ua'],
+                'details': r['details'],
+                'created_at': r['created_at']
+            })
+        return result
+
+    def get_by_id(self, audit_id: int):
+        rows = self.db.execute_query("SELECT * FROM telegram_audit WHERE id = ? LIMIT 1", (audit_id,))
+        if not rows:
+            return None
+        r = rows[0]
+        return {
+            'id': r['id'],
+            'user_id': r['user_id'],
+            'event_type': r['event_type'],
+            'ip': r['ip'],
+            'ua': r['ua'],
+            'details': r['details'],
+            'created_at': r['created_at']
+        }

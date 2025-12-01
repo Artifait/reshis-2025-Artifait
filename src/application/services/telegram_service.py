@@ -100,6 +100,7 @@ class TelegramService:
             return False, 'Не удалось привязать токен'
         # обновляем user
         user.telegram_id = bound.chat_id
+        user.telegram_2fa_enabled = 1
         self.user_repo.update(user)
         try:
             self.audit_repo.create(TelegramAudit(id=None, user_id=user.id, event_type='bind_success', ip=None, ua=None, details=json.dumps({'chat_id': bound.chat_id, 'token': token_str})))

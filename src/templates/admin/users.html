@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Админ — пользователи{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1><i class="fas fa-user-shield"></i> Админ — Пользователи</h1>
+  </div>
+
+  <div class="form-container admin-search">
+    <form method="GET" action="{{ url_for('admin.users_list') }}" class="admin-search-form">
+      <input name="q" class="form-control" placeholder="Поиск по имени, логину или email" value="{{ q or '' }}" />
+      <button class="btn btn-primary btn-search">Поиск</button>
+    </form>
+  </div>
+
+  <div class="admin-list">
+    <div class="table-responsive">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th class="col-id">id</th>
+            <th class="col-username">Логин</th>
+            <th class="col-name">ФИО</th>
+            <th class="col-email">Email</th>
+            <th class="col-role">Роль</th>
+            <th class="col-telegram">Telegram</th>
+            <th class="col-2fa">2FA</th>
+            <th class="col-actions">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="col-id">{{ u.id }}</td>
+            <td class="col-username">@{{ u.username }}</td>
+            <td class="col-name">{{ u.get_full_name() }}</td>
+            <td class="col-email">{{ u.email }}</td>
+            <td class="col-role">{{ u.role.value }}</td>
+            <td class="col-telegram">{{ u.telegram_display() }}</td>
+            <td class="col-2fa">{{ 'Да' if u.is_telegram_2fa_enabled() else 'Нет' }}</td>
+            <td class="col-actions">
+              <div class="actions-cell">
+                <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.user_audit', user_id=u.id) }}">
+                  <i class="fas fa-search"></i>&nbsp;<span class="btn-text">Аудит</span>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

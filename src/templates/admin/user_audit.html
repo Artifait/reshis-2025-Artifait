@@ -1,0 +1,96 @@
+{% extends "base.html" %} {% block title %}Аудит — {{ user.get_full_name() }}
+({% raw %}@{% endraw %}{{ user.username }}){% endblock %} {% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-list"></i> Аудит — {{ user.get_full_name() }} (@{{ user.username }})
+    </h1>
+  </div>
+
+  <div style="display: flex; gap: 1rem; margin-bottom: 1rem">
+    <button id="btn-toggle-2fa" class="btn btn-primary">
+      {{ 'Отключить 2FA' if user.telegram_2fa_enabled else 'Включить 2FA' }}
+    </button>
+    <button id="btn-unbind" class="btn btn-primary">Открепить Telegram</button>
+    <button id="btn-require-2fa" class="btn btn-primary">
+      Потребовать 2FA при следующем входе
+    </button>
+    <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary"
+      >Назад к списку</a
+    >
+  </div>
+
+  <div class="form-container" style="padding: 0.5rem; min-width: 995px">
+    <div class="table-responsive">
+      <table
+        class="admin-audit-table"
+        style="width: 100%; border-collapse: collapse; table-layout: fixed"
+      >
+        <thead>
+          <tr style="text-align: left">
+            <th class="time-col">Время</th>
+            <th class="type-col">Тип</th>
+            <th class="ip-col">IP</th>
+            <th class="ua-col">UA</th>
+            <th class="details-col">Details</th>
+            <th class="action-col">Открыть</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in audits %}
+          <tr class="audit-row">
+            <td class="time-col">{{ a.created_at }}</td>
+            <td class="type-col">{{ a.event_type }}</td>
+            <td class="ip-col">{{ a.ip or '—' }}</td>
+            <td class="ua-col" title="{{ a.ua or '' }}">{{ a.ua or '—' }}</td>
+            <td class="details-col" title="{{ a.details or '' }}">
+              {{ a.details[:200] ~ ('...' if (a.details|length) > 200 else '') }}
+            </td>
+            <td class="action-col">
+              <a
+                class="btn btn-secondary btn-sm audit-btn"
+                href="{{ url_for('admin.user_audit_detail', user_id=user.id, audit_id=a.id) }}"
+                >Открыть</a
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      // кнопки admin (те же обработчики, как раньше)
+      document.getElementById('btn-toggle-2fa').addEventListener('click', async function(){
+        const enabled = !(Boolean({{ 1 if user.telegram_2fa_enabled else 0 }}));
+        const resp = await fetch('{{ url_for("admin.toggle_2fa", user_id=user.id) }}', {
+          method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({enabled: enabled})
+        });
+        const j = await resp.json();
+        if(j.ok) location.reload();
+        else alert('Ошибка');
+      });
+
+      document.getElementById('btn-unbind').addEventListener('click', async function(){
+        if(!confirm('Открепить Telegram у этого пользователя?')) return;
+        const resp = await fetch('{{ url_for("admin.unbind_telegram", user_id=user.id) }}', { method:'POST' });
+        const j = await resp.json();
+        if(j.ok) location.reload();
+        else alert('Ошибка');
+      });
+
+      document.getElementById('btn-require-2fa').addEventListener('click', async function(){
+        if(!confirm('Потребовать 2FA при следующем входе?')) return;
+        const resp = await fetch('{{ url_for("admin.require_2fa", user_id=user.id) }}', { method:'POST' });
+        const j = await resp.json();
+        if(j.ok) {
+          alert('Готово — пользователь будет запрошен повторно при следующем входе');
+          location.reload();
+        } else alert('Ошибка');
+      });
+    });
+  </script>
+  {% endblock %}
+</div>

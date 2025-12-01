@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from application.services.auth_service import AuthService
@@ -5,14 +6,37 @@ from application.services.telegram_service import TelegramService
 from domain.entities.user import UserRole
 from presentation.forms.auth_forms import LoginForm, RegisterForm, ChangePasswordForm
 
+from domain.entities.telegram import TelegramAudit
+
 
 class AuthController:
     
-    def __init__(self, auth_service: AuthService, telegram_service: TelegramService | None = None):
+    def __init__(self, auth_service: AuthService, telegram_service: TelegramService | None = None, audit_repo=None):
         self.auth_service = auth_service
         self.telegram_service = telegram_service
+        self.audit_repo = audit_repo
         self.bp = Blueprint('auth', __name__)
         self._register_routes()
+    
+    def _create_audit(self, user_id, event_type: str, ip: str | None, ua: str | None, details: dict | str | None = None):
+        try:
+            details_s = ''
+            if details is not None:
+                details_s = json.dumps(details) if isinstance(details, dict) else str(details)
+            
+            audit = TelegramAudit(
+                id=None,
+                user_id=user_id,
+                event_type=event_type,
+                ip=ip,
+                ua=ua,
+                details=details_s,
+                created_at=None
+            )
+            if self.audit_repo:
+                self.audit_repo.create(audit)
+        except Exception:
+            pass
     
     def _register_routes(self):
         
@@ -21,30 +45,48 @@ class AuthController:
             form = LoginForm()
             if form.validate_on_submit():
                 user = self.auth_service.authenticate_user(form.username.data, form.password.data)
+                from flask import request as flask_request
+                current_ip = flask_request.remote_addr or '0.0.0.0'
+                ua = flask_request.headers.get('User-Agent')
+                
                 if user:
-                    from flask_login import login_user
-                    from flask import request as flask_request
-                    current_ip = flask_request.remote_addr or '0.0.0.0'
                     last_ip = getattr(user, 'last_login_ip', None)
-                    telegram_enabled = getattr(user, 'telegram_2fa_enabled', True)
-                    
-                    # имеем ли мы chat для пользователя
-                    token_row = self.telegram_service.chat_token_repo.get_by_user_id(user.id)
+                    telegram_enabled = bool(getattr(user, 'telegram_2fa_enabled', True))
+                    token_row = None
+                    try:
+                        token_row = self.telegram_service.chat_token_repo.get_by_user_id(user.id) if self.telegram_service else None
+                    except Exception:
+                        token_row = None
                     has_chat = bool(token_row)
                     
                     if last_ip and last_ip != current_ip and telegram_enabled and has_chat:
-                        # create verification and show wait page
-                        verif = self.telegram_service.create_login_verification(user, current_ip)
-                        token = verif.token if verif else ''
+                        try:
+                            verif = self.telegram_service.create_login_verification(user, current_ip)
+                            token = verif.token if verif else ''
+                        except Exception:
+                            token = ''
+                            verif = None
+                        # audit: login request (2FA) sent
+                        self._create_audit(user.id, 'login_request_sent', current_ip, ua, {'token': token})
                         return render_template('auth/wait_confirmation.html', token=token)
                     else:
                         # normal login
+                        from flask_login import login_user
                         login_user(user, remember=form.remember_me.data)
                         user.last_login_ip = current_ip
-                        self.auth_service.user_repo.update(user)
-                        flash('Вы успешно вошли в систему!' + str(last_ip) + str(telegram_enabled) + str(has_chat) , 'success')
+                        try:
+                            self.auth_service.user_repo.update(user)
+                        except Exception:
+                            pass
+                        # audit: login success
+                        self._create_audit(user.id, 'login_success', current_ip, ua, None)
+                        flash('Вы успешно вошли в систему!', 'success')
                         return redirect(url_for('main.index'))
                 else:
+                    # audit: failed login attempt
+                    self._create_audit(None, 'login_failed', flask_request.remote_addr or '0.0.0.0',
+                                       flask_request.headers.get('User-Agent'),
+                                       {'username': form.username.data})
                     flash('Неверное имя пользователя или пароль', 'error')
             
             return render_template('auth/login.html', form=form)
@@ -97,6 +139,10 @@ class AuthController:
                     current_user.set_password(form.new_password.data)
                     try:
                         self.auth_service.user_repo.update(current_user)
+                        # audit: password change
+                        from flask import request as flask_request
+                        self._create_audit(current_user.id, 'password_changed', flask_request.remote_addr or '0.0.0.0',
+                                           flask_request.headers.get('User-Agent'), None)
                     except Exception:
                         pass
                     flash('Пароль успешно изменен', 'success')
@@ -143,7 +189,6 @@ class AuthController:
             try:
                 # очистим поля в users
                 current_user.telegram_id = None
-                # обновляем пользователя в репозитории (AuthService должен иметь user_repo)
                 try:
                     self.auth_service.user_repo.update(current_user)
                 except Exception:
@@ -152,9 +197,16 @@ class AuthController:
                 # освобождаем все токены, связанные с этим user_id
                 try:
                     if self.telegram_service and self.telegram_service.chat_token_repo:
-                        self.telegram_service.chat_token_repo.unbind_tokens_by_user(current_user.id)
+                        removed = self.telegram_service.chat_token_repo.unbind_tokens_by_user(current_user.id)
+                    else:
+                        removed = None
                 except Exception:
-                    pass
+                    removed = None
+                
+                # audit: user unbound their telegram
+                from flask import request as flask_request
+                self._create_audit(current_user.id, 'user_unbind_telegram', flask_request.remote_addr or '0.0.0.0',
+                                   flask_request.headers.get('User-Agent'), {'tokens_removed': removed})
             
             except Exception:
                 pass
@@ -202,6 +254,12 @@ class AuthController:
                     self.auth_service.user_repo.update(user)
                 except Exception:
                     pass
+                
+                # audit: login confirmed via telegram
+                from flask import request as flask_request
+                self._create_audit(user.id, 'login_confirmed', flask_request.remote_addr or '0.0.0.0',
+                                   flask_request.headers.get('User-Agent'), {'token': token})
+                
                 return jsonify({"ok": True, "redirect": url_for('main.index')})
             except Exception as e:
                 return jsonify({"ok": False, "message": str(e)}), 500
